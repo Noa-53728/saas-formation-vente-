@@ -1,6 +1,6 @@
-# Formio (Étape 2)
+# Formio (Étape 1)
 
-SaaS Next.js 14 (App Router) pour vendre et acheter des formations (vidéo + PDF). Étape 2 : authentification Supabase (login/register), table `profiles`, dashboard protégé et bouton de déconnexion.
+SaaS Next.js 14 (App Router) pour vendre et acheter des formations (vidéo + PDF). Cette première étape installe le squelette Next.js + Tailwind et ajoute Supabase côté client/serveur.
 
 ## 📦 Commandes pour créer le projet (déjà appliquées ici)
 
@@ -37,37 +37,6 @@ STRIPE_WEBHOOK_SECRET="whsec_xxx"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-## 🗄️ Créer la table `profiles` dans Supabase
-
-Dans le dashboard Supabase > SQL > New query, exécutez :
-
-```sql
-create table if not exists public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  full_name text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  is_seller boolean default false
-);
-```
-
-Activez la politique d'insertion pour les utilisateurs authentifiés (SQL) :
-
-```sql
-alter table public.profiles enable row level security;
-create policy "users insert their profile" on public.profiles
-  for insert with check (auth.uid() = id);
-create policy "users view their profile" on public.profiles
-  for select using (auth.uid() = id);
-create policy "users update their profile" on public.profiles
-  for update using (auth.uid() = id);
-```
-
-## 🧭 Routes ajoutées à l'étape 2
-- `/auth/login` : formulaire de connexion Supabase (email/mot de passe).
-- `/auth/register` : création de compte + insertion automatique dans `profiles` (full_name, is_seller=false).
-- `/dashboard` : page protégée qui redirige vers `/auth/login` si l'utilisateur n'est pas connecté. Affiche le profil et des sections placeholder (formations achetées / créées).
-- Header : si connecté, affichage du lien Dashboard + bouton "Se déconnecter" (server action Supabase).
-
 ## ▶️ Lancer en local
 
 ```bash
@@ -75,12 +44,8 @@ npm install   # installe les dépendances
 npm run dev   # http://localhost:3000
 ```
 
-Connectez les variables d'environnement, puis :
-1. Créez un utilisateur via `/auth/register` (ou via Supabase Auth UI si besoin).
-2. Vérifiez que le profil est créé dans la table `profiles`.
-3. La page `/dashboard` redirige les visiteurs non connectés vers `/auth/login`.
-
 ## ✅ Prochaines étapes
+- Étape 2 : auth Supabase (login/register) + table `profiles` + dashboard protégé.
 - Étape 3 : modèle `courses`, pages `/courses/new` et `/courses/[id]`.
 - Étape 4 : Stripe Checkout + webhook + contrôle d’accès contenu.
 - Étape 5 : messagerie simple + retouches design + récap déploiement.
