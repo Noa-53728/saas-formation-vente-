@@ -1,14 +1,28 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import "./globals.css";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const metadata: Metadata = {
   title: "Formio | Vendez et achetez vos formations",
   description: "Une plateforme simple pour vendre et acheter des formations vidéo + PDF"
 };
 
-export default function RootLayout({
+const signOut = async () => {
+  "use server";
+  const supabase = createSupabaseServerClient();
+  await supabase.auth.signOut();
+  redirect("/");
+};
+
+export default async function RootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
+  const supabase = createSupabaseServerClient();
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+
   return (
     <html lang="fr">
       <body className="antialiased">
@@ -23,13 +37,28 @@ export default function RootLayout({
                 <p className="text-sm text-white/60">Formations vidéo + PDF</p>
               </div>
             </div>
-            <div className="flex gap-3 text-sm">
-              <a className="button-secondary" href="/auth/login">
-                Se connecter
-              </a>
-              <a className="button-primary" href="/auth/register">
-                Créer un compte
-              </a>
+            <div className="flex items-center gap-3 text-sm">
+              {session ? (
+                <>
+                  <a className="button-secondary" href="/dashboard">
+                    Dashboard
+                  </a>
+                  <form action={signOut}>
+                    <button type="submit" className="button-primary">
+                      Se déconnecter
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <a className="button-secondary" href="/auth/login">
+                    Se connecter
+                  </a>
+                  <a className="button-primary" href="/auth/register">
+                    Créer un compte
+                  </a>
+                </>
+              )}
             </div>
           </header>
           <main>{children}</main>
