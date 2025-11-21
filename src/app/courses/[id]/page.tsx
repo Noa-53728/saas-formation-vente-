@@ -1,10 +1,39 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const formatPrice = (priceCents: number) => `${(priceCents / 100).toFixed(2)} €`;
 
 export default async function CourseDetailPage({ params }: { params: { id: string } }) {
+  const createCheckoutAction = async (formData: FormData) => {
+    "use server";
+    const courseId = formData.get("courseId") as string;
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      redirect("/auth/login");
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ courseId })
+    });
+
+    const payload = await response.json();
+    if (payload?.url) {
+      redirect(payload.url as string);
+    }
+
+    throw new Error(payload?.error || "Impossible de créer la session Stripe");
+  };
+
   const supabase = createSupabaseServerClient();
   const {
     data: { session }
@@ -71,12 +100,16 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-white/70">
-                Accès verrouillé. Connectez-vous pour acheter cette formation à l&apos;étape Stripe.
+                Accès verrouillé. Connectez-vous puis passez au paiement sécurisé Stripe.
               </p>
               {session ? (
-                <button className="button-primary w-full" type="button" disabled>
-                  Acheter (Stripe arrive à l&apos;étape 4)
-                </button>
+                <form action={createCheckoutAction} className="space-y-2">
+                  <input type="hidden" name="courseId" value={course.id} />
+                  <button className="button-primary w-full" type="submit">
+                    Acheter la formation via Stripe
+                  </button>
+                  <p className="text-xs text-white/40">Redirection vers Stripe Checkout.</p>
+                </form>
               ) : (
                 <Link className="button-primary w-full text-center block" href="/auth/login">
                   Se connecter pour acheter
