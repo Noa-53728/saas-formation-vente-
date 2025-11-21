@@ -1,6 +1,6 @@
-# Formio (Étape 1)
+# Formio (Étape 3)
 
-SaaS Next.js 14 (App Router) pour vendre et acheter des formations (vidéo + PDF). Cette première étape installe le squelette Next.js + Tailwind et ajoute Supabase côté client/serveur.
+SaaS Next.js 14 (App Router) pour vendre et acheter des formations (vidéo + PDF). Étape 3 : modèle `courses`, création de formation (/courses/new), page publique de formation (/courses/[id]) et dashboard alimenté par vos données.
 
 ## 📦 Commandes pour créer le projet (déjà appliquées ici)
 
