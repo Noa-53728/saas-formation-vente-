@@ -115,18 +115,6 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
                   Se connecter pour acheter
                 </Link>
               )}
-              {session ? (
-                <Link
-                  className="button-secondary w-full text-center block"
-                  href={`/messages/${course.id}/${course.author_id}`}
-                >
-                  Contacter le vendeur
-                </Link>
-              ) : (
-                <Link className="button-secondary w-full text-center block" href="/auth/register">
-                  Poser une question au vendeur
-                </Link>
-              )}
             </div>
           )}
         </div>
