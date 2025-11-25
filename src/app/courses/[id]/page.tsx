@@ -39,9 +39,12 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
     data: { session }
   } = await supabase.auth.getSession();
 
+  // 🔥 Correction ici : author:profiles(full_name)
   const { data: course, error } = await supabase
     .from("courses")
-    .select("id, title, description, price_cents, video_url, pdf_url, thumbnail_url, author_id, profiles(full_name)")
+    .select(
+      "id, title, description, price_cents, video_url, pdf_url, thumbnail_url, author_id, author:profiles(full_name)"
+    )
     .eq("id", params.id)
     .single();
 
@@ -70,9 +73,17 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
           <p className="text-sm uppercase tracking-wide text-accent font-semibold">Formation</p>
           <h1 className="text-3xl font-bold">{course.title}</h1>
           <p className="text-white/70 leading-relaxed whitespace-pre-line">{course.description}</p>
+
           <div className="flex flex-wrap items-center gap-3 text-sm text-white/70">
-            <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5">{formatPrice(course.price_cents)}</span>
-            {course.profiles?.full_name ? <span>Par {course.profiles.full_name}</span> : null}
+            <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5">
+              {formatPrice(course.price_cents)}
+            </span>
+
+            {/* 🔥 Correction ici : course.author.full_name */}
+            {course.author?.full_name ? (
+              <span>Par {course.author.full_name}</span>
+            ) : null}
+
             <span className="text-white/50">ID : {course.id}</span>
           </div>
         </div>
@@ -89,26 +100,41 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
           {hasAccess ? (
             <div className="space-y-3">
               <p className="text-sm text-white/70">Contenu disponible</p>
-              <a className="button-primary block text-center" href={course.video_url} target="_blank" rel="noreferrer">
+              <a
+                className="button-primary block text-center"
+                href={course.video_url}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Voir la vidéo
               </a>
-              <a className="button-secondary block text-center" href={course.pdf_url} target="_blank" rel="noreferrer">
+              <a
+                className="button-secondary block text-center"
+                href={course.pdf_url}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Télécharger le PDF
               </a>
-              <p className="text-xs text-white/40">Accès car vous êtes l&apos;auteur ou acheteur.</p>
+              <p className="text-xs text-white/40">
+                Accès car vous êtes l&apos;auteur ou acheteur.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-white/70">
                 Accès verrouillé. Connectez-vous puis passez au paiement sécurisé Stripe.
               </p>
+
               {session ? (
                 <form action={createCheckoutAction} className="space-y-2">
                   <input type="hidden" name="courseId" value={course.id} />
                   <button className="button-primary w-full" type="submit">
                     Acheter la formation via Stripe
                   </button>
-                  <p className="text-xs text-white/40">Redirection vers Stripe Checkout.</p>
+                  <p className="text-xs text-white/40">
+                    Redirection vers Stripe Checkout.
+                  </p>
                 </form>
               ) : (
                 <Link className="button-primary w-full text-center block" href="/auth/login">
