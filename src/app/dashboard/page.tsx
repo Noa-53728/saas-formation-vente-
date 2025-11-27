@@ -4,10 +4,16 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 const formatPrice = (priceCents: number | null) =>
   typeof priceCents === "number" ? `${(priceCents / 100).toFixed(2)} €` : "-";
 
+// 🔥 Corrige le fait que Supabase peut renvoyer un objet OU un tableau
+const normalizeCourse = (c: any) => {
+  if (!c) return null;
+  return Array.isArray(c) ? c[0] : c;
+};
+
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
   const {
-    data: { session }
+    data: { session },
   } = await supabase.auth.getSession();
 
   if (!session) {
@@ -32,7 +38,6 @@ export default async function DashboardPage() {
     .eq("user_id", session.user.id)
     .order("created_at", { ascending: false });
 
-  // 🟢 FERMETURE LOGIQUE JS, PUIS JSX PROPRE
   return (
     <div className="grid gap-6">
       <div className="card">
@@ -40,7 +45,6 @@ export default async function DashboardPage() {
         <h1 className="text-3xl font-semibold mt-2">
           {profile?.full_name ?? "Créateur"}
         </h1>
-
         <p className="text-white/70 mt-2">
           Voici un aperçu rapide de vos formations.
         </p>
@@ -51,34 +55,32 @@ export default async function DashboardPage() {
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Formations achetées</h2>
-            <span className="text-xs rounded-full bg-white/10 px-3 py-1">
-              Accès
-            </span>
+            <span className="text-xs rounded-full bg-white/10 px-3 py-1">Accès</span>
           </div>
 
           {purchases && purchases.length > 0 ? (
             <div className="space-y-3">
-              {purchases.map((purchase) => (
-                <a
-                  key={purchase.id}
-                  className="block p-3 rounded-lg bg-white/5 border border-white/10 hover:border-accent/60"
-                  href={`/courses/${purchase.course?.id}`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium">
-                        {purchase.course?.title}
-                      </p>
-                      <p className="text-xs text-white/60">
-                        {formatPrice(
-                          purchase.course?.price_cents ?? null
-                        )}
-                      </p>
+              {purchases.map((purchase) => {
+                const course = normalizeCourse(purchase.course);
+
+                return (
+                  <a
+                    key={purchase.id}
+                    className="block p-3 rounded-lg bg-white/5 border border-white/10 hover:border-accent/60"
+                    href={`/courses/${course?.id}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{course?.title}</p>
+                        <p className="text-xs text-white/60">
+                          {formatPrice(course?.price_cents ?? null)}
+                        </p>
+                      </div>
+                      <span className="text-xs text-accent">Voir</span>
                     </div>
-                    <span className="text-xs text-accent">Voir</span>
-                  </div>
-                </a>
-              ))}
+                  </a>
+                );
+              })}
             </div>
           ) : (
             <p className="text-white/70 text-sm">
@@ -117,12 +119,11 @@ export default async function DashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="text-white/70 text-sm">
-              Ajoutez vos formations ici.
-            </p>
+            <p className="text-white/70 text-sm">Ajoutez vos formations ici.</p>
           )}
         </div>
       </div>
     </div>
   );
 }
+
