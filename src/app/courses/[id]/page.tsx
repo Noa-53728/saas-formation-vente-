@@ -80,7 +80,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
             </span>
 
             {/* 🔥 Correction ici : course.author.full_name */}
-            {course.author?.full_name ? (
+            {course.author?.[0]?.full_name (
               <span>Par {course.author.full_name}</span>
             ) : null}
 
