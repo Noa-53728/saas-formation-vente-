@@ -36,7 +36,7 @@ export default async function MessagesPage() {
 
   const conversations = new Map<string, ConversationPreview>();
 
-  rows?.forEach((row) => {
+  rows?.forEach((row: any) => {
     const sender = normalizeUser(row.sender);
     const receiver = normalizeUser(row.receiver);
 
@@ -48,13 +48,21 @@ export default async function MessagesPage() {
         ? receiver?.full_name
         : sender?.full_name;
 
+    // ✅ ICI on gère le fait que "courses" est un tableau
+    let courseTitle = "Formation";
+    if (Array.isArray(row.courses)) {
+      courseTitle = row.courses[0]?.title ?? "Formation";
+    } else if (row.courses?.title) {
+      courseTitle = row.courses.title;
+    }
+
     const key = `${row.course_id}-${partnerId}`;
 
     if (!conversations.has(key)) {
       conversations.set(key, {
         id: row.id,
         course_id: row.course_id,
-        course_title: row.courses?.title || "Formation",
+        course_title: courseTitle,
         partner_id: partnerId,
         partner_name: partnerName || "Contact",
         last_message: row.content,
@@ -106,3 +114,4 @@ export default async function MessagesPage() {
     </div>
   );
 }
+
