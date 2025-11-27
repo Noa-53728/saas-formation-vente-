@@ -11,6 +11,12 @@ interface ConversationPreview {
   created_at: string;
 }
 
+// 🔥 Normalise sender/receiver (objet OU tableau Supabase)
+const normalizeUser = (u: any) => {
+  if (!u) return null;
+  return Array.isArray(u) ? u[0] : u;
+};
+
 export default async function MessagesPage() {
   const supabase = createSupabaseServerClient();
   const { data: sessionData } = await supabase.auth.getSession();
@@ -31,8 +37,17 @@ export default async function MessagesPage() {
   const conversations = new Map<string, ConversationPreview>();
 
   rows?.forEach((row) => {
-    const partnerId = row.sender_id === session.user.id ? row.receiver_id : row.sender_id;
-    const partnerName = row.sender_id === session.user.id ? row.receiver?.full_name : row.sender?.full_name;
+    const sender = normalizeUser(row.sender);
+    const receiver = normalizeUser(row.receiver);
+
+    const partnerId =
+      row.sender_id === session.user.id ? row.receiver_id : row.sender_id;
+
+    const partnerName =
+      row.sender_id === session.user.id
+        ? receiver?.full_name
+        : sender?.full_name;
+
     const key = `${row.course_id}-${partnerId}`;
 
     if (!conversations.has(key)) {
@@ -53,11 +68,15 @@ export default async function MessagesPage() {
       <div className="card">
         <p className="text-sm text-white/60">Messagerie</p>
         <h1 className="text-2xl font-semibold mt-2">Conversations</h1>
-        <p className="text-sm text-white/60">Discutez avec les vendeurs ou vos clients avant d&apos;acheter.</p>
+        <p className="text-sm text-white/60">
+          Discutez avec les vendeurs ou vos clients avant d&apos;acheter.
+        </p>
       </div>
 
       {conversations.size === 0 ? (
-        <div className="card text-sm text-white/70">Aucune conversation pour le moment.</div>
+        <div className="card text-sm text-white/70">
+          Aucune conversation pour le moment.
+        </div>
       ) : (
         <div className="grid gap-3">
           {[...conversations.values()].map((conversation) => (
@@ -68,9 +87,15 @@ export default async function MessagesPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm text-white/60">{conversation.course_title}</p>
-                  <p className="text-lg font-semibold">{conversation.partner_name}</p>
-                  <p className="text-sm text-white/60 line-clamp-1">{conversation.last_message}</p>
+                  <p className="text-sm text-white/60">
+                    {conversation.course_title}
+                  </p>
+                  <p className="text-lg font-semibold">
+                    {conversation.partner_name}
+                  </p>
+                  <p className="text-sm text-white/60 line-clamp-1">
+                    {conversation.last_message}
+                  </p>
                 </div>
                 <span className="text-xs text-accent">Ouvrir</span>
               </div>
