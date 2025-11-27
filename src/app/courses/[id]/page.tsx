@@ -2,7 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-const formatPrice = (priceCents: number) => `${(priceCents / 100).toFixed(2)} €`;
+const formatPrice = (priceCents: number) =>
+  `${(priceCents / 100).toFixed(2)} €`;
 
 export default async function CourseDetailPage({ params }: { params: { id: string } }) {
   const createCheckoutAction = async (formData: FormData) => {
@@ -20,17 +21,12 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const response = await fetch(`${baseUrl}/api/checkout`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseId })
     });
 
     const payload = await response.json();
-    if (payload?.url) {
-      redirect(payload.url as string);
-    }
-
+    if (payload?.url) redirect(payload.url);
     throw new Error(payload?.error || "Impossible de créer la session Stripe");
   };
 
@@ -39,18 +35,24 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
     data: { session }
   } = await supabase.auth.getSession();
 
-  // 🔥 Correction ici : author:profiles(full_name)
+  // 🔥 BONNE RELATION SUPABASE
   const { data: course, error } = await supabase
     .from("courses")
-    .select(
-      "id, title, description, price_cents, video_url, pdf_url, thumbnail_url, author_id, author:profiles(full_name)"
-    )
+    .select(`
+      id,
+      title,
+      description,
+      price_cents,
+      video_url,
+      pdf_url,
+      thumbnail_url,
+      author_id,
+      author:profiles(full_name)
+    `)
     .eq("id", params.id)
     .single();
 
-  if (error || !course) {
-    notFound();
-  }
+  if (error || !course) notFound();
 
   const isOwner = session?.user.id === course.author_id;
   let hasAccess = isOwner;
@@ -70,17 +72,22 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-[1.6fr,1fr]">
         <div className="space-y-4">
-          <p className="text-sm uppercase tracking-wide text-accent font-semibold">Formation</p>
+          <p className="text-sm uppercase tracking-wide text-accent font-semibold">
+            Formation
+          </p>
+
           <h1 className="text-3xl font-bold">{course.title}</h1>
-          <p className="text-white/70 leading-relaxed whitespace-pre-line">{course.description}</p>
+          <p className="text-white/70 leading-relaxed whitespace-pre-line">
+            {course.description}
+          </p>
 
           <div className="flex flex-wrap items-center gap-3 text-sm text-white/70">
             <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5">
               {formatPrice(course.price_cents)}
             </span>
 
-            {/* 🔥 Correction ici : course.author.full_name */}
-            {course.author?.[0]?.full_name (
+            {/* 🔥 Correction finale ici */}
+            {course.author?.full_name ? (
               <span>Par {course.author.full_name}</span>
             ) : null}
 
@@ -137,7 +144,10 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
                   </p>
                 </form>
               ) : (
-                <Link className="button-primary w-full text-center block" href="/auth/login">
+                <Link
+                  className="button-primary w-full text-center block"
+                  href="/auth/login"
+                >
                   Se connecter pour acheter
                 </Link>
               )}
