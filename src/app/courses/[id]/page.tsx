@@ -5,58 +5,57 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 const formatPrice = (priceCents: number) =>
   `${(priceCents / 100).toFixed(2)} €`;
 
-export default async function CourseDetailPage({ params }: { params: { id: string } }) {
+export default async function CourseDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const createCheckoutAction = async (formData: FormData) => {
     "use server";
     const courseId = formData.get("courseId") as string;
+
     const supabase = createSupabaseServerClient();
     const {
-      data: { session }
+      data: { session },
     } = await supabase.auth.getSession();
 
-    if (!session) {
-      redirect("/auth/login");
-    }
+    if (!session) redirect("/auth/login");
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     const response = await fetch(`${baseUrl}/api/checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId })
+      body: JSON.stringify({ courseId }),
     });
 
     const payload = await response.json();
     if (payload?.url) redirect(payload.url);
-    throw new Error(payload?.error || "Impossible de créer la session Stripe");
+
+    throw new Error(
+      payload?.error || "Impossible de créer la session Stripe"
+    );
   };
 
   const supabase = createSupabaseServerClient();
   const {
-    data: { session }
+    data: { session },
   } = await supabase.auth.getSession();
 
-  // 🔥 BONNE RELATION SUPABASE
   const { data: course, error } = await supabase
     .from("courses")
-    .select(`
-      id,
-      title,
-      description,
-      price_cents,
-      video_url,
-      pdf_url,
-      thumbnail_url,
-      author_id,
-      author:profiles(full_name)
-    `)
+    .select(
+      "id, title, description, price_cents, video_url, pdf_url, thumbnail_url, author_id, author:profiles(full_name)"
+    )
     .eq("id", params.id)
     .single();
 
   if (error || !course) notFound();
 
   const isOwner = session?.user.id === course.author_id;
-  let hasAccess = isOwner;
 
+  let hasAccess = isOwner;
   if (session && !hasAccess) {
     const { data: purchase } = await supabase
       .from("purchases")
@@ -86,27 +85,28 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
               {formatPrice(course.price_cents)}
             </span>
 
-            {/* 🔥 Correction finale ici */}
-            {course.author?.full_name ? (
+            {/* 🔥 AFFICHE LE NOM AUTEUR CORRECT */}
+            {course.author?.full_name && (
               <span>Par {course.author.full_name}</span>
-            ) : null}
+            )}
 
             <span className="text-white/50">ID : {course.id}</span>
           </div>
         </div>
 
         <div className="space-y-4 bg-white/5 border border-white/10 rounded-xl p-5">
-          {course.thumbnail_url ? (
+          {course.thumbnail_url && (
             <img
               alt={course.title}
               className="w-full rounded-lg border border-white/10 object-cover"
               src={course.thumbnail_url}
             />
-          ) : null}
+          )}
 
           {hasAccess ? (
             <div className="space-y-3">
               <p className="text-sm text-white/70">Contenu disponible</p>
+
               <a
                 className="button-primary block text-center"
                 href={course.video_url}
@@ -115,6 +115,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
               >
                 Voir la vidéo
               </a>
+
               <a
                 className="button-secondary block text-center"
                 href={course.pdf_url}
@@ -123,6 +124,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
               >
                 Télécharger le PDF
               </a>
+
               <p className="text-xs text-white/40">
                 Accès car vous êtes l&apos;auteur ou acheteur.
               </p>
@@ -130,7 +132,8 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-white/70">
-                Accès verrouillé. Connectez-vous puis passez au paiement sécurisé Stripe.
+                Accès verrouillé. Connectez-vous puis passez au paiement
+                sécurisé Stripe.
               </p>
 
               {session ? (
