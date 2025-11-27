@@ -87,8 +87,8 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
             </span>
 
             {/* 🔥 Correction finale ici */}
-            {course.author?.full_name ? (
-              <span>Par {course.author.full_name}</span>
+            {Array.isArray(course.author) && course.author.length > 0 ? (
+               <span>Par {course.author[0].full_name}</span>
             ) : null}
 
             <span className="text-white/50">ID : {course.id}</span>
