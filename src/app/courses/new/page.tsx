@@ -9,9 +9,7 @@ const createCourse = async (formData: FormData) => {
     data: { session }
   } = await supabase.auth.getSession();
 
-  if (!session) {
-    redirect("/auth/login");
-  }
+  if (!session) redirect("/auth/login");
 
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim();
@@ -53,9 +51,7 @@ export default async function NewCoursePage() {
     data: { session }
   } = await supabase.auth.getSession();
 
-  if (!session) {
-    redirect("/auth/login");
-  }
+  if (!session) redirect("/auth/login");
 
   return (
     <div className="space-y-6">
@@ -68,65 +64,84 @@ export default async function NewCoursePage() {
       </div>
 
       <form action={createCourse} className="space-y-5 bg-white/5 border border-white/10 rounded-xl p-6">
+        
+        {/* Titre + Prix */}
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
             <span className="text-sm font-medium">Titre *</span>
             <input
-              className="input"
               name="title"
-              placeholder="Ex : Devenir expert Next.js"
-              required
               type="text"
+              required
+              placeholder="Ex : Devenir expert Next.js"
+              className="w-full rounded-lg bg-white text-black p-3 border border-white/20"
             />
           </label>
+
           <label className="space-y-2">
             <span className="text-sm font-medium">Prix (EUR) *</span>
             <input
-              className="input"
               name="price"
-              placeholder="199"
+              type="number"
               min="0"
               step="0.01"
               required
-              type="number"
+              placeholder="199"
+              className="w-full rounded-lg bg-white text-black p-3 border border-white/20"
             />
           </label>
         </div>
 
+        {/* Description */}
         <label className="space-y-2 block">
           <span className="text-sm font-medium">Description *</span>
           <textarea
-            className="input min-h-[120px]"
             name="description"
-            placeholder="Décrivez la formation, les modules, les bénéfices..."
             required
+            placeholder="Décrivez la formation, les modules, les bénéfices..."
+            className="w-full min-h-[120px] rounded-lg bg-white text-black p-3 border border-white/20"
           />
         </label>
 
+        {/* Vidéo + PDF */}
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
             <span className="text-sm font-medium">URL vidéo (hébergée) *</span>
             <input
-              className="input"
               name="video_url"
-              placeholder="https://..."
-              required
               type="url"
+              required
+              placeholder="https://..."
+              className="w-full rounded-lg bg-white text-black p-3 border border-white/20"
             />
           </label>
+
           <label className="space-y-2">
             <span className="text-sm font-medium">URL PDF (hébergé) *</span>
-            <input className="input" name="pdf_url" placeholder="https://..." required type="url" />
+            <input
+              name="pdf_url"
+              type="url"
+              required
+              placeholder="https://..."
+              className="w-full rounded-lg bg-white text-black p-3 border border-white/20"
+            />
           </label>
         </div>
 
+        {/* Thumbnail */}
         <label className="space-y-2 block">
           <span className="text-sm font-medium">Thumbnail (optionnel)</span>
-          <input className="input" name="thumbnail_url" placeholder="https://..." type="url" />
+          <input
+            name="thumbnail_url"
+            type="url"
+            placeholder="https://..."
+            className="w-full rounded-lg bg-white text-black p-3 border border-white/20"
+          />
         </label>
 
+        {/* Bouton */}
         <div className="flex items-center gap-3">
-          <button className="button-primary" type="submit">
+          <button type="submit" className="button-primary">
             Créer la formation
           </button>
           <p className="text-xs text-white/50">Les fichiers doivent déjà être hébergés (Supabase Storage, autre).</p>
