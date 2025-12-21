@@ -47,7 +47,7 @@ export default async function DashboardPage() {
           {profile?.full_name ?? "Créateur"}
         </h1>
         <p className="text-white/70 mt-2">
-          Voici un aperçu rapide de vos formations.
+          Voici un aperçu de votre activité.
         </p>
 
         {/* 🔍 BARRE DE RECHERCHE (CONNECTÉ) */}
