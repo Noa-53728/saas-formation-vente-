@@ -11,40 +11,9 @@ export default function Home() {
         </h1>
 
         <p className="text-lg text-white/70 leading-relaxed">
-          Créez une offre, partagez votre lien, encaissez via Stripe et livrez le contenu en toute sécurité.
+          Créez une offre, partagez votre lien, encaissez via Stripe et livrez le
+          contenu en toute sécurité.
         </p>
-
-        {/* 🔍 BARRE DE RECHERCHE */}
-        <form
-          action="/search"
-          method="GET"
-          className="flex flex-col sm:flex-row gap-3 bg-white/5 border border-white/10 rounded-xl p-4"
-        >
-          <input
-            name="q"
-            placeholder="Rechercher une formation..."
-            className="flex-1 px-4 py-2 rounded-md bg-background border border-white/10"
-          />
-
-          <select
-            name="category"
-            className="px-4 py-2 rounded-md bg-background border border-white/10"
-          >
-            <option value="">Toutes les catégories</option>
-            <option value="business">Business & entrepreneuriat</option>
-            <option value="marketing">Marketing digital</option>
-            <option value="tech">Tech & Digital</option>
-            <option value="education">Éducation</option>
-            <option value="dev_perso">Développement personnel</option>
-            <option value="sport">Sport & Santé</option>
-            <option value="creatif">Créatif</option>
-            <option value="autre">Autre</option>
-          </select>
-
-          <button className="button-primary">
-            Rechercher
-          </button>
-        </form>
 
         <div className="flex flex-wrap gap-4">
           <a className="button-primary" href="/auth/register">
@@ -62,6 +31,7 @@ export default function Home() {
               Paiements sécurisés et webhooks prêts pour l’auto-livraison.
             </p>
           </div>
+
           <div className="card">
             <p className="text-2xl font-semibold text-white">Supabase</p>
             <p className="mt-2">
