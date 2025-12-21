@@ -67,22 +67,41 @@ export default async function DashboardPage() {
           />
 
           <select
-            name="category"
-            className="px-4 py-2 rounded-md
-                       bg-white/5 text-white
-                       border border-white/10
-                       focus:outline-none focus:ring-2 focus:ring-accent"
-          >
-            <option value="">Toutes les catégories</option>
-            <option value="business">Business & entrepreneuriat</option>
-            <option value="marketing">Marketing digital</option>
-            <option value="tech">Tech & Digital</option>
-            <option value="education">Éducation</option>
-            <option value="dev_perso">Développement personnel</option>
-            <option value="sport">Sport & Santé</option>
-            <option value="creatif">Créatif</option>
-            <option value="autre">Autre</option>
-          </select>
+  name="category"
+  className="px-4 py-2 rounded-md
+             bg-white/5 text-white
+             border border-white/10
+             focus:outline-none focus:ring-2 focus:ring-accent"
+>
+  <option value="" className="bg-[#0b0f1a] text-white">
+    Toutes les catégories
+  </option>
+  <option value="business" className="bg-[#0b0f1a] text-white">
+    Business & entrepreneuriat
+  </option>
+  <option value="marketing" className="bg-[#0b0f1a] text-white">
+    Marketing digital
+  </option>
+  <option value="tech" className="bg-[#0b0f1a] text-white">
+    Tech & Digital
+  </option>
+  <option value="education" className="bg-[#0b0f1a] text-white">
+    Éducation
+  </option>
+  <option value="dev_perso" className="bg-[#0b0f1a] text-white">
+    Développement personnel
+  </option>
+  <option value="sport" className="bg-[#0b0f1a] text-white">
+    Sport & Santé
+  </option>
+  <option value="creatif" className="bg-[#0b0f1a] text-white">
+    Créatif
+  </option>
+  <option value="autre" className="bg-[#0b0f1a] text-white">
+    Autre
+  </option>
+</select>
+
 
           <button className="button-primary">Rechercher</button>
         </form>
