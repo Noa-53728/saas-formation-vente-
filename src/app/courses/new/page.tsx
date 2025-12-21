@@ -13,12 +13,14 @@ const createCourse = async (formData: FormData) => {
 
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim();
+  const category = (formData.get("category") as string)?.trim();
   const price = Number(formData.get("price"));
   const videoUrl = (formData.get("video_url") as string)?.trim();
   const pdfUrl = (formData.get("pdf_url") as string)?.trim();
   const thumbnailUrl = (formData.get("thumbnail_url") as string)?.trim();
 
-  if (!title || !description || !videoUrl || !pdfUrl || Number.isNaN(price)) {
+  // ✅ Validation correcte
+  if (!title || !description || !category || Number.isNaN(price)) {
     throw new Error("Merci de remplir tous les champs obligatoires.");
   }
 
@@ -27,9 +29,10 @@ const createCourse = async (formData: FormData) => {
   const { error } = await supabase.from("courses").insert({
     title,
     description,
+    category,
     price_cents: priceCents,
-    video_url: videoUrl,
-    pdf_url: pdfUrl,
+    video_url: videoUrl || null,
+    pdf_url: pdfUrl || null,
     thumbnail_url: thumbnailUrl || null,
     author_id: session.user.id,
   });
@@ -38,7 +41,6 @@ const createCourse = async (formData: FormData) => {
     throw new Error(`Impossible de créer la formation : ${error.message}`);
   }
 
-  // ✅ REDIRECTION SÛRE
   redirect("/dashboard");
 };
 
@@ -89,17 +91,51 @@ export default async function NewCoursePage() {
           className="input min-h-[120px]"
         />
 
+        {/* ✅ CATÉGORIE */}
+        <select
+          name="category"
+          required
+          className="input bg-white/5 text-white"
+        >
+          <option value="" className="bg-[#0b0f1a] text-white">
+            Choisir une catégorie
+          </option>
+          <option value="business" className="bg-[#0b0f1a] text-white">
+            Business & entrepreneuriat
+          </option>
+          <option value="marketing" className="bg-[#0b0f1a] text-white">
+            Marketing digital
+          </option>
+          <option value="tech" className="bg-[#0b0f1a] text-white">
+            Tech & Digital
+          </option>
+          <option value="education" className="bg-[#0b0f1a] text-white">
+            Éducation
+          </option>
+          <option value="dev_perso" className="bg-[#0b0f1a] text-white">
+            Développement personnel
+          </option>
+          <option value="sport" className="bg-[#0b0f1a] text-white">
+            Sport & Santé
+          </option>
+          <option value="creatif" className="bg-[#0b0f1a] text-white">
+            Créatif
+          </option>
+          <option value="autre" className="bg-[#0b0f1a] text-white">
+            Autre
+          </option>
+        </select>
+
+        {/* ✅ URLS FACULTATIVES */}
         <div className="grid gap-4 md:grid-cols-2">
           <input
             name="video_url"
-            required
-            placeholder="URL vidéo"
+            placeholder="URL vidéo (optionnel)"
             className="input"
           />
           <input
             name="pdf_url"
-            required
-            placeholder="URL PDF"
+            placeholder="URL PDF (optionnel)"
             className="input"
           />
         </div>
