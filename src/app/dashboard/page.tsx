@@ -40,6 +40,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="grid gap-6">
+      {/* HEADER */}
       <div className="card">
         <p className="text-sm text-white/60">Bonjour</p>
         <h1 className="text-3xl font-semibold mt-2">
@@ -48,14 +49,54 @@ export default async function DashboardPage() {
         <p className="text-white/70 mt-2">
           Voici un aperçu rapide de vos formations.
         </p>
+
+        {/* 🔍 BARRE DE RECHERCHE (CONNECTÉ) */}
+        <form
+          action="/search"
+          method="GET"
+          className="mt-6 flex flex-col sm:flex-row gap-3 bg-white/5 border border-white/10 rounded-xl p-4"
+        >
+          <input
+            name="q"
+            placeholder="Rechercher une formation..."
+            className="flex-1 px-4 py-2 rounded-md
+                       bg-white/5 text-white
+                       placeholder:text-white/40
+                       border border-white/10
+                       focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+
+          <select
+            name="category"
+            className="px-4 py-2 rounded-md
+                       bg-white/5 text-white
+                       border border-white/10
+                       focus:outline-none focus:ring-2 focus:ring-accent"
+          >
+            <option value="">Toutes les catégories</option>
+            <option value="business">Business & entrepreneuriat</option>
+            <option value="marketing">Marketing digital</option>
+            <option value="tech">Tech & Digital</option>
+            <option value="education">Éducation</option>
+            <option value="dev_perso">Développement personnel</option>
+            <option value="sport">Sport & Santé</option>
+            <option value="creatif">Créatif</option>
+            <option value="autre">Autre</option>
+          </select>
+
+          <button className="button-primary">Rechercher</button>
+        </form>
       </div>
 
+      {/* CONTENU */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* FORMATIONS ACHETÉES */}
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Formations achetées</h2>
-            <span className="text-xs rounded-full bg-white/10 px-3 py-1">Accès</span>
+            <span className="text-xs rounded-full bg-white/10 px-3 py-1">
+              Accès
+            </span>
           </div>
 
           {purchases && purchases.length > 0 ? (
@@ -119,11 +160,12 @@ export default async function DashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="text-white/70 text-sm">Ajoutez vos formations ici.</p>
+            <p className="text-white/70 text-sm">
+              Ajoutez vos formations ici.
+            </p>
           )}
         </div>
       </div>
     </div>
   );
 }
-
