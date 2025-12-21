@@ -19,9 +19,9 @@ const createCourse = async (formData: FormData) => {
   const pdfUrl = (formData.get("pdf_url") as string)?.trim();
   const thumbnailUrl = (formData.get("thumbnail_url") as string)?.trim();
 
-  // ✅ Validation correcte
+  // ✅ Validation minimale et logique
   if (!title || !description || !category || Number.isNaN(price)) {
-    throw new Error("Merci de remplir tous les champs obligatoires.");
+    throw new Error("Merci de remplir les champs obligatoires.");
   }
 
   const priceCents = Math.max(0, Math.round(price * 100));
@@ -54,6 +54,7 @@ export default async function NewCoursePage() {
 
   return (
     <div className="space-y-6">
+      {/* HEADER */}
       <div className="space-y-2">
         <p className="text-sm uppercase tracking-wide text-accent font-semibold">
           Nouvelle formation
@@ -64,86 +65,91 @@ export default async function NewCoursePage() {
         </p>
       </div>
 
+      {/* FORMULAIRE */}
       <form
         action={createCourse}
         className="space-y-5 bg-white/5 border border-white/10 rounded-xl p-6"
       >
+        {/* TITRE + PRIX */}
         <div className="grid gap-4 md:grid-cols-2">
           <input
             name="title"
             required
             placeholder="Titre"
-            className="input"
+            className="input bg-white/5 text-white placeholder:text-white/40"
           />
           <input
             name="price"
             type="number"
             required
             placeholder="Prix"
-            className="input"
+            className="input bg-white/5 text-white placeholder:text-white/40"
           />
         </div>
 
-        <textarea
-          name="description"
-          required
-          placeholder="Description"
-          className="input min-h-[120px]"
-        />
+        {/* DESCRIPTION + CATÉGORIE */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <textarea
+            name="description"
+            required
+            placeholder="Description"
+            className="input min-h-[120px] bg-white/5 text-white placeholder:text-white/40"
+          />
 
-        {/* ✅ CATÉGORIE */}
-        <select
-          name="category"
-          required
-          className="input bg-white/5 text-white"
-        >
-          <option value="" className="bg-[#0b0f1a] text-white">
-            Choisir une catégorie
-          </option>
-          <option value="business" className="bg-[#0b0f1a] text-white">
-            Business & entrepreneuriat
-          </option>
-          <option value="marketing" className="bg-[#0b0f1a] text-white">
-            Marketing digital
-          </option>
-          <option value="tech" className="bg-[#0b0f1a] text-white">
-            Tech & Digital
-          </option>
-          <option value="education" className="bg-[#0b0f1a] text-white">
-            Éducation
-          </option>
-          <option value="dev_perso" className="bg-[#0b0f1a] text-white">
-            Développement personnel
-          </option>
-          <option value="sport" className="bg-[#0b0f1a] text-white">
-            Sport & Santé
-          </option>
-          <option value="creatif" className="bg-[#0b0f1a] text-white">
-            Créatif
-          </option>
-          <option value="autre" className="bg-[#0b0f1a] text-white">
-            Autre
-          </option>
-        </select>
+          <select
+            name="category"
+            required
+            className="input bg-white/5 text-white"
+          >
+            <option value="" className="bg-[#0b0f1a] text-white">
+              Choisir une catégorie
+            </option>
+            <option value="business" className="bg-[#0b0f1a] text-white">
+              Business & entrepreneuriat
+            </option>
+            <option value="marketing" className="bg-[#0b0f1a] text-white">
+              Marketing digital
+            </option>
+            <option value="tech" className="bg-[#0b0f1a] text-white">
+              Tech & Digital
+            </option>
+            <option value="education" className="bg-[#0b0f1a] text-white">
+              Éducation
+            </option>
+            <option value="dev_perso" className="bg-[#0b0f1a] text-white">
+              Développement personnel
+            </option>
+            <option value="sport" className="bg-[#0b0f1a] text-white">
+              Sport & Santé
+            </option>
+            <option value="creatif" className="bg-[#0b0f1a] text-white">
+              Créatif
+            </option>
+            <option value="autre" className="bg-[#0b0f1a] text-white">
+              Autre
+            </option>
+          </select>
+        </div>
 
-        {/* ✅ URLS FACULTATIVES */}
+        {/* URLS (FACULTATIVES) */}
         <div className="grid gap-4 md:grid-cols-2">
           <input
             name="video_url"
             placeholder="URL vidéo (optionnel)"
-            className="input"
+            className="input bg-white/5 text-white placeholder:text-white/40"
           />
           <input
             name="pdf_url"
             placeholder="URL PDF (optionnel)"
-            className="input"
+            className="input bg-white/5 text-white placeholder:text-white/40"
           />
         </div>
 
+        {/* THUMBNAIL */}
         <input
           name="thumbnail_url"
           placeholder="Thumbnail (optionnel)"
-          className="input"
+          className="input bg-white/5 text-white placeholder:text-white/40"
         />
 
         <button className="button-primary w-full" type="submit">
