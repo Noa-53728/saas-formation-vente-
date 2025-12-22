@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const formatPrice = (priceCents: number | null) =>
-  typeof priceCents === "number" ? `${(priceCents / 100).toFixed(2)} €` : "-";
+  typeof priceCents === "number"
+    ? `${(priceCents / 100).toFixed(2)} €`
+    : "-";
 
 // 🔥 Corrige le fait que Supabase peut renvoyer un objet OU un tableau
 const normalizeCourse = (c: any) => {
@@ -12,6 +14,7 @@ const normalizeCourse = (c: any) => {
 
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -50,7 +53,7 @@ export default async function DashboardPage() {
           Voici un aperçu de votre activité.
         </p>
 
-        {/* 🔍 BARRE DE RECHERCHE (CONNECTÉ) */}
+        {/* BARRE DE RECHERCHE */}
         <form
           action="/search"
           method="GET"
@@ -67,41 +70,40 @@ export default async function DashboardPage() {
           />
 
           <select
-  name="category"
-  className="px-4 py-2 rounded-md
-             bg-white/5 text-white
-             border border-white/10
-             focus:outline-none focus:ring-2 focus:ring-accent"
->
-  <option value="" className="bg-[#0b0f1a] text-white">
-    Toutes les catégories
-  </option>
-  <option value="business" className="bg-[#0b0f1a] text-white">
-    Business & entrepreneuriat
-  </option>
-  <option value="marketing" className="bg-[#0b0f1a] text-white">
-    Marketing digital
-  </option>
-  <option value="tech" className="bg-[#0b0f1a] text-white">
-    Tech & Digital
-  </option>
-  <option value="education" className="bg-[#0b0f1a] text-white">
-    Éducation
-  </option>
-  <option value="dev_perso" className="bg-[#0b0f1a] text-white">
-    Développement personnel
-  </option>
-  <option value="sport" className="bg-[#0b0f1a] text-white">
-    Sport & Santé
-  </option>
-  <option value="creatif" className="bg-[#0b0f1a] text-white">
-    Créatif
-  </option>
-  <option value="autre" className="bg-[#0b0f1a] text-white">
-    Autre
-  </option>
-</select>
-
+            name="category"
+            className="px-4 py-2 rounded-md
+                       bg-white/5 text-white
+                       border border-white/10
+                       focus:outline-none focus:ring-2 focus:ring-accent"
+          >
+            <option value="" className="bg-[#0b0f1a] text-white">
+              Toutes les catégories
+            </option>
+            <option value="business" className="bg-[#0b0f1a] text-white">
+              Business & entrepreneuriat
+            </option>
+            <option value="marketing" className="bg-[#0b0f1a] text-white">
+              Marketing digital
+            </option>
+            <option value="tech" className="bg-[#0b0f1a] text-white">
+              Tech & Digital
+            </option>
+            <option value="education" className="bg-[#0b0f1a] text-white">
+              Éducation
+            </option>
+            <option value="dev_perso" className="bg-[#0b0f1a] text-white">
+              Développement personnel
+            </option>
+            <option value="sport" className="bg-[#0b0f1a] text-white">
+              Sport & Santé
+            </option>
+            <option value="creatif" className="bg-[#0b0f1a] text-white">
+              Créatif
+            </option>
+            <option value="autre" className="bg-[#0b0f1a] text-white">
+              Autre
+            </option>
+          </select>
 
           <button className="button-primary">Rechercher</button>
         </form>
@@ -126,8 +128,8 @@ export default async function DashboardPage() {
                 return (
                   <a
                     key={purchase.id}
-                    className="block p-3 rounded-lg bg-white/5 border border-white/10 hover:border-accent/60"
                     href={`/courses/${course?.id}`}
+                    className="block p-3 rounded-lg bg-white/5 border border-white/10 hover:border-accent/60"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -149,7 +151,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* MES FORMATIONS */}
+        {/* VOS FORMATIONS */}
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Vos formations</h2>
@@ -163,8 +165,8 @@ export default async function DashboardPage() {
               {authoredCourses.map((course) => (
                 <a
                   key={course.id}
+                  href={`/dashboard/courses/${course.id}/edit`}
                   className="block p-3 rounded-lg bg-white/5 border border-white/10 hover:border-accent/60"
-                  href={`/courses/${course.id}`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -188,3 +190,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
