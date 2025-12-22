@@ -7,16 +7,18 @@ export async function POST(
 ) {
   const supabase = createSupabaseServerClient();
 
-  // 1️⃣ Vérifier la session
+  // 🔐 Vérifier la session
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   if (!session) {
-    return NextResponse.redirect("/auth/login");
+    return NextResponse.redirect(
+      new URL("/auth/login", req.url)
+    );
   }
 
-  // 2️⃣ Vérifier que le cours appartient à l'utilisateur
+  // 🔍 Vérifier que le cours appartient à l’utilisateur
   const { data: course } = await supabase
     .from("courses")
     .select("author_id")
@@ -24,15 +26,20 @@ export async function POST(
     .maybeSingle();
 
   if (!course || course.author_id !== session.user.id) {
-    return NextResponse.redirect("/dashboard");
+    return NextResponse.redirect(
+      new URL("/dashboard", req.url)
+    );
   }
 
-  // 3️⃣ Supprimer le cours
+  // 🗑️ Supprimer la formation
   await supabase
     .from("courses")
     .delete()
     .eq("id", params.id);
 
-  // 4️⃣ Redirection
-  return NextResponse.redirect(new URL("/dashboard", req.url));
+  // ✅ Retour dashboard
+  return NextResponse.redirect(
+    new URL("/dashboard", req.url)
+  );
 }
+
