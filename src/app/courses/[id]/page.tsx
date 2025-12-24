@@ -12,14 +12,14 @@ export default async function CourseDetailPage({
 }) {
   const supabase = createSupabaseServerClient();
 
-  /* ✅ SAFE AUTH (NE MODIFIE PAS LES COOKIES) */
+  /* ✅ SAFE AUTH */
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const userId = user?.id;
+  const userId = user?.id ?? null;
 
-  /* 🔎 Récupération de la formation */
+  /* 🔎 COURSE */
   const { data: course, error } = await supabase
     .from("courses")
     .select(
@@ -40,7 +40,7 @@ export default async function CourseDetailPage({
 
   if (error || !course) notFound();
 
-  /* 🔐 Accès */
+  /* 🔐 ACCESS */
   const isOwner = userId === course.author_id;
   let hasAccess = isOwner;
 
@@ -55,7 +55,7 @@ export default async function CourseDetailPage({
     hasAccess = Boolean(purchase);
   }
 
-  /* 💳 STRIPE CHECKOUT */
+  /* 💳 STRIPE CHECKOUT (SERVER ACTION) */
   const createCheckoutAction = async (formData: FormData) => {
     "use server";
 
@@ -69,21 +69,21 @@ export default async function CourseDetailPage({
     if (!user) redirect("/auth/login");
 
     const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    const response = await fetch(`${baseUrl}/api/checkout`, {
+    const res = await fetch(`${baseUrl}/api/stripe/checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseId }),
     });
 
-    const payload = await response.json();
+    const data = await res.json();
 
-    if (payload?.url) redirect(payload.url);
+    if (data?.url) {
+      redirect(data.url);
+    }
 
-    throw new Error(
-      payload?.error || "Impossible de créer la session Stripe"
-    );
+    throw new Error("Impossible de créer la session Stripe");
   };
 
   return (
@@ -110,7 +110,7 @@ export default async function CourseDetailPage({
               <span>Par {course.author[0].full_name}</span>
             )}
 
-            <span className="text-white/50">ID : {course.id}</span>
+            <span className="text-white/40">ID : {course.id}</span>
           </div>
         </div>
 
@@ -153,13 +153,13 @@ export default async function CourseDetailPage({
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-white/70">
-                Accès verrouillé. Connexion + paiement requis.
+                Accès verrouillé. Paiement requis.
               </p>
 
               {userId ? (
                 <form action={createCheckoutAction}>
                   <input type="hidden" name="courseId" value={course.id} />
-                  <button className="button-primary w-full" type="submit">
+                  <button type="submit" className="button-primary w-full">
                     Acheter via Stripe
                   </button>
                 </form>
@@ -178,4 +178,3 @@ export default async function CourseDetailPage({
     </div>
   );
 }
-
