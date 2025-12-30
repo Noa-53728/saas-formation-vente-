@@ -86,6 +86,23 @@ export default async function CourseDetailPage({
     throw new Error("Impossible de créer la session Stripe");
   };
 
+  /* 💬 CONTACT SELLER (SERVER ACTION) */
+  const contactSellerAction = async () => {
+    "use server";
+
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) redirect("/auth/login");
+
+    // éviter de "contacter" soi-même
+    if (user.id === course.author_id) redirect("/dashboard");
+
+    redirect(`/messages/${course.id}/${course.author_id}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-[1.6fr,1fr]">
@@ -146,6 +163,15 @@ export default async function CourseDetailPage({
                 Télécharger le PDF
               </a>
 
+              {/* 💬 CONTACTER LE VENDEUR (après achat aussi) */}
+              {!isOwner && (
+                <form action={contactSellerAction}>
+                  <button type="submit" className="button-secondary w-full">
+                    Contacter le vendeur
+                  </button>
+                </form>
+              )}
+
               <p className="text-xs text-white/40">
                 Accès autorisé (auteur ou acheteur).
               </p>
@@ -157,19 +183,39 @@ export default async function CourseDetailPage({
               </p>
 
               {userId ? (
-                <form action={createCheckoutAction}>
-                  <input type="hidden" name="courseId" value={course.id} />
-                  <button type="submit" className="button-primary w-full">
-                    Acheter via Stripe
-                  </button>
-                </form>
+                <>
+                  <form action={createCheckoutAction}>
+                    <input type="hidden" name="courseId" value={course.id} />
+                    <button type="submit" className="button-primary w-full">
+                      Acheter via Stripe
+                    </button>
+                  </form>
+
+                  {/* 💬 CONTACTER LE VENDEUR (avant achat) */}
+                  {!isOwner && (
+                    <form action={contactSellerAction}>
+                      <button type="submit" className="button-secondary w-full">
+                        Contacter le vendeur
+                      </button>
+                    </form>
+                  )}
+                </>
               ) : (
-                <Link
-                  href="/auth/login"
-                  className="button-primary w-full block text-center"
-                >
-                  Se connecter pour acheter
-                </Link>
+                <>
+                  <Link
+                    href="/auth/login"
+                    className="button-primary w-full block text-center"
+                  >
+                    Se connecter pour acheter
+                  </Link>
+
+                  <Link
+                    href="/auth/login"
+                    className="button-secondary w-full block text-center"
+                  >
+                    Se connecter pour contacter le vendeur
+                  </Link>
+                </>
               )}
             </div>
           )}
