@@ -3,16 +3,16 @@ export default function Home() {
     <div className="grid gap-10 lg:grid-cols-2 items-center">
       <div className="space-y-6">
         <p className="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm text-white/70 border border-white/15">
-          vendre & acheter des formations de façon simple
+          Marketplace de formations professionnelles
         </p>
 
         <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-          Formio vous aide à vendre vos formations vidéo + PDF en quelques minutes.
+          Vendez et trouvez des formations vidéo + PDF en toute confiance.
         </h1>
 
         <p className="text-lg text-white/70 leading-relaxed">
-          Créez une offre, partagez votre lien, encaissez via Stripe et livrez le
-          contenu en toute sécurité.
+          Formio est une plateforme sécurisée qui met en relation créateurs de
+          formations et apprenants, avec paiement et accès automatisés.
         </p>
 
         <div className="flex flex-wrap gap-4">
@@ -26,16 +26,18 @@ export default function Home() {
 
         <div className="grid grid-cols-2 gap-4 text-sm text-white/70">
           <div className="card">
-            <p className="text-2xl font-semibold text-white">Stripe Checkout</p>
+            <p className="text-2xl font-semibold text-white">Pour les créateurs</p>
             <p className="mt-2">
-              Paiements sécurisés et webhooks prêts pour l’auto-livraison.
+              Publiez vos formations rapidement, gérez vos ventes et encaissez en
+              toute sécurité.
             </p>
           </div>
 
           <div className="card">
-            <p className="text-2xl font-semibold text-white">Supabase</p>
+            <p className="text-2xl font-semibold text-white">Pour les apprenants</p>
             <p className="mt-2">
-              Auth, stockage et base PostgreSQL pour vos formations.
+              Échangez avec le vendeur, payez en toute confiance et accédez
+              instantanément au contenu.
             </p>
           </div>
         </div>
@@ -49,7 +51,7 @@ export default function Home() {
             <div>
               <p className="font-semibold">Publiez votre formation</p>
               <p className="text-white/60 text-sm">
-                Titre, description, prix, vidéo, PDF.
+                Titre, description, prix, vidéo, documents.
               </p>
             </div>
             <span className="text-accent font-semibold">+ 15 min</span>
@@ -57,19 +59,19 @@ export default function Home() {
 
           <div className="flex items-center justify-between border border-white/10 rounded-lg p-4">
             <div>
-              <p className="font-semibold">Encaissez avec Stripe</p>
+              <p className="font-semibold">Paiement sécurisé</p>
               <p className="text-white/60 text-sm">
-                Checkout + webhook pour débloquer l’accès.
+                Checkout fiable avec validation automatique.
               </p>
             </div>
-            <span className="text-accent font-semibold">+ 5 min</span>
+            <span className="text-accent font-semibold">sécurisé</span>
           </div>
 
           <div className="flex items-center justify-between border border-white/10 rounded-lg p-4">
             <div>
-              <p className="font-semibold">Livrez le contenu</p>
+              <p className="font-semibold">Accès immédiat</p>
               <p className="text-white/60 text-sm">
-                Accès automatique pour les acheteurs.
+                Le contenu est disponible dès l’achat, sans intervention manuelle.
               </p>
             </div>
             <span className="text-accent font-semibold">automatique</span>
@@ -77,8 +79,8 @@ export default function Home() {
         </div>
 
         <p className="text-white/70 text-sm">
-          Étapes suivantes : connectez Supabase pour l’authentification,
-          ajoutez vos premières formations et branchez Stripe.
+          Formio est conçu pour offrir une expérience simple, fiable et
+          professionnelle, aussi bien pour vendre que pour apprendre.
         </p>
       </div>
     </div>
