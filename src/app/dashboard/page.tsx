@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const formatPrice = (priceCents: number | null) =>
@@ -23,10 +22,7 @@ type AuthoredCourse = {
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session) redirect("/auth/login");
 
   const userId = session.user.id;
@@ -40,7 +36,8 @@ export default async function DashboardPage() {
   const { data: authoredCoursesRaw } = await supabase
     .from("courses")
     .select("id, title, price_cents, created_at, boosted_at, boost_expires_at")
-    .eq("author_id", userId);
+    .eq("author_id", userId)
+    .order("created_at", { ascending: false });
 
   const authoredCourses = (authoredCoursesRaw ?? []) as AuthoredCourse[];
 
@@ -68,46 +65,8 @@ export default async function DashboardPage() {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  // ✅ Server Action (aucune closure sur des fonctions externes)
-  const createBoostCheckoutAction = async (formData: FormData) => {
-    "use server";
-
-    const courseId = String(formData.get("courseId") ?? "");
-    if (!courseId) throw new Error("courseId manquant");
-
-    const supabase = createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
-
-    // ✅ baseUrl calculé ici (pas de helper externe)
-    const h = headers();
-    const host = h.get("x-forwarded-host") ?? h.get("host");
-    const proto = h.get("x-forwarded-proto") ?? "https";
-    const baseUrl = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
-
-    const res = await fetch(`${baseUrl}/api/stripe/boost`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId }),
-      cache: "no-store",
-    });
-
-    const text = await res.text();
-    let data: any = null;
-    try { data = JSON.parse(text); } catch {}
-
-    if (!res.ok) {
-      throw new Error(data?.error || text || `Boost API error (${res.status})`);
-    }
-
-    if (data?.url) redirect(data.url);
-
-    throw new Error("URL Stripe manquante (boost)");
-  };
-
   return (
     <div className="grid gap-6">
-      {/* HEADER */}
       <div className="card">
         <p className="text-sm text-white/60">Bonjour</p>
         <h1 className="text-3xl font-semibold mt-2">
@@ -146,9 +105,7 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      {/* CONTENU */}
       <div className="grid gap-4 md:grid-cols-2">
-        {/* FORMATIONS ACHETÉES */}
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Formations achetées</h2>
@@ -183,7 +140,6 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* VOS FORMATIONS */}
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Vos formations</h2>
@@ -196,10 +152,7 @@ export default async function DashboardPage() {
                 const active = isBoostActive(course);
 
                 return (
-                  <div
-                    key={course.id}
-                    className="p-3 rounded-lg bg-white/5 border border-white/10 hover:border-accent/60"
-                  >
+                  <div key={course.id} className="p-3 rounded-lg bg-white/5 border border-white/10">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
@@ -237,15 +190,12 @@ export default async function DashboardPage() {
                       </p>
 
                       {!active && (
-                        <form action={createBoostCheckoutAction}>
-                          <input type="hidden" name="courseId" value={course.id} />
-                          <button
-                            type="submit"
-                            className="text-xs rounded-lg px-3 py-2 bg-accent text-white hover:opacity-90 transition whitespace-nowrap"
-                          >
-                            Booster 7 jours • 4,99 €
-                          </button>
-                        </form>
+                        <Link
+                          href={`/api/stripe/boost?courseId=${course.id}`}
+                          className="text-xs rounded-lg px-3 py-2 bg-accent text-white hover:opacity-90 transition whitespace-nowrap"
+                        >
+                          Booster 7 jours • 4,99 €
+                        </Link>
                       )}
                     </div>
                   </div>
