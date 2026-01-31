@@ -8,7 +8,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
   const body = await req.text();
-  const signature = headers().get("stripe-signature")!;
+  const signature = headers().get("stripe-signature");
+
+  if (!signature) {
+    return new Response("Missing signature", { status: 400 });
+  }
 
   let event: Stripe.Event;
 
@@ -19,46 +23,29 @@ export async function POST(req: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err) {
-    console.error("Webhook signature verification failed.");
-    return new Response("Webhook Error", { status: 400 });
+    return new Response("Webhook error", { status: 400 });
   }
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const supabase = createSupabaseServerClient();
 
-    const metadata = session.metadata;
+    // ✅ on ne traite que les boosts
+    if (session.metadata?.type === "boost") {
+      const courseId = session.metadata.course_id;
 
-    if (!metadata) {
-      return new Response("No metadata", { status: 400 });
-    }
+      const supabase = createSupabaseServerClient();
 
-    /**
-     * 🟢 CAS 1 : ACHAT D’UNE FORMATION
-     */
-    if (metadata.type === "course") {
-      await supabase.from("purchases").insert({
-        user_id: metadata.user_id,
-        course_id: metadata.course_id,
-        amount_cents: session.amount_total,
-      });
-    }
-
-    /**
-     * 🟣 CAS 2 : BOOST DE FORMATION (7 jours)
-     */
-    if (metadata.type === "boost") {
       const now = new Date();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
+      const expires = new Date(now);
+      expires.setDate(expires.getDate() + 7);
 
       await supabase
         .from("courses")
         .update({
           boosted_at: now.toISOString(),
-          boost_expires_at: expiresAt.toISOString(),
+          boost_expires_at: expires.toISOString(),
         })
-        .eq("id", metadata.course_id);
+        .eq("id", courseId);
     }
   }
 
