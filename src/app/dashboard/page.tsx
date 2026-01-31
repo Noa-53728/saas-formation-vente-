@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { createBoostCheckoutAction } from "@/app/actions/boost";
 
 const formatPrice = (priceCents: number | null) =>
   typeof priceCents === "number" ? `${(priceCents / 100).toFixed(2)} €` : "-";
@@ -51,14 +51,12 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false });
 
   const now = new Date();
-
   const isBoostActive = (c: AuthoredCourse) =>
     !!c.boost_expires_at && new Date(c.boost_expires_at) > now;
 
   const sortedAuthoredCourses = [...authoredCourses].sort((a, b) => {
     const aActive = isBoostActive(a);
     const bActive = isBoostActive(b);
-
     if (aActive !== bActive) return aActive ? -1 : 1;
 
     if (aActive && bActive) {
@@ -67,13 +65,49 @@ export default async function DashboardPage() {
       if (aExp !== bExp) return bExp - aExp;
     }
 
-    const aCreated = new Date(a.created_at).getTime();
-    const bCreated = new Date(b.created_at).getTime();
-    return bCreated - aCreated;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
+
+  // ✅ Server Action (aucune closure sur des fonctions externes)
+  const createBoostCheckoutAction = async (formData: FormData) => {
+    "use server";
+
+    const courseId = String(formData.get("courseId") ?? "");
+    if (!courseId) throw new Error("courseId manquant");
+
+    const supabase = createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/auth/login");
+
+    // ✅ baseUrl calculé ici (pas de helper externe)
+    const h = headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    const proto = h.get("x-forwarded-proto") ?? "https";
+    const baseUrl = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
+
+    const res = await fetch(`${baseUrl}/api/stripe/boost`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId }),
+      cache: "no-store",
+    });
+
+    const text = await res.text();
+    let data: any = null;
+    try { data = JSON.parse(text); } catch {}
+
+    if (!res.ok) {
+      throw new Error(data?.error || text || `Boost API error (${res.status})`);
+    }
+
+    if (data?.url) redirect(data.url);
+
+    throw new Error("URL Stripe manquante (boost)");
+  };
 
   return (
     <div className="grid gap-6">
+      {/* HEADER */}
       <div className="card">
         <p className="text-sm text-white/60">Bonjour</p>
         <h1 className="text-3xl font-semibold mt-2">
@@ -97,42 +131,24 @@ export default async function DashboardPage() {
             className="px-4 py-2 rounded-md bg-white/5 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-accent"
             defaultValue=""
           >
-            <option value="" className="bg-[#0b0f1a] text-white">
-              Toutes les catégories
-            </option>
-            <option value="business" className="bg-[#0b0f1a] text-white">
-              Business & entrepreneuriat
-            </option>
-            <option value="marketing" className="bg-[#0b0f1a] text-white">
-              Marketing digital
-            </option>
-            <option value="tech" className="bg-[#0b0f1a] text-white">
-              Tech & Digital
-            </option>
-            <option value="education" className="bg-[#0b0f1a] text-white">
-              Éducation
-            </option>
-            <option value="dev_perso" className="bg-[#0b0f1a] text-white">
-              Développement personnel
-            </option>
-            <option value="sport" className="bg-[#0b0f1a] text-white">
-              Sport & Santé
-            </option>
-            <option value="creatif" className="bg-[#0b0f1a] text-white">
-              Créatif
-            </option>
-            <option value="autre" className="bg-[#0b0f1a] text-white">
-              Autre
-            </option>
+            <option value="" className="bg-[#0b0f1a] text-white">Toutes les catégories</option>
+            <option value="business" className="bg-[#0b0f1a] text-white">Business & entrepreneuriat</option>
+            <option value="marketing" className="bg-[#0b0f1a] text-white">Marketing digital</option>
+            <option value="tech" className="bg-[#0b0f1a] text-white">Tech & Digital</option>
+            <option value="education" className="bg-[#0b0f1a] text-white">Éducation</option>
+            <option value="dev_perso" className="bg-[#0b0f1a] text-white">Développement personnel</option>
+            <option value="sport" className="bg-[#0b0f1a] text-white">Sport & Santé</option>
+            <option value="creatif" className="bg-[#0b0f1a] text-white">Créatif</option>
+            <option value="autre" className="bg-[#0b0f1a] text-white">Autre</option>
           </select>
 
-          <button className="button-primary" type="submit">
-            Rechercher
-          </button>
+          <button className="button-primary" type="submit">Rechercher</button>
         </form>
       </div>
 
+      {/* CONTENU */}
       <div className="grid gap-4 md:grid-cols-2">
+        {/* FORMATIONS ACHETÉES */}
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Formations achetées</h2>
@@ -154,9 +170,7 @@ export default async function DashboardPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="font-medium">{course.title}</p>
-                        <p className="text-xs text-white/60">
-                          {formatPrice(course.price_cents ?? null)}
-                        </p>
+                        <p className="text-xs text-white/60">{formatPrice(course.price_cents ?? null)}</p>
                       </div>
                       <span className="text-xs text-accent">Voir</span>
                     </div>
@@ -169,12 +183,11 @@ export default async function DashboardPage() {
           )}
         </div>
 
+        {/* VOS FORMATIONS */}
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Vos formations</h2>
-            <Link className="text-sm text-accent" href="/courses/new">
-              Publier une formation
-            </Link>
+            <Link className="text-sm text-accent" href="/courses/new">Publier une formation</Link>
           </div>
 
           {sortedAuthoredCourses.length > 0 ? (
@@ -202,9 +215,7 @@ export default async function DashboardPage() {
                           {formatPrice(course.price_cents)}
                           {active && course.boost_expires_at && (
                             <span className="text-white/40">
-                              {" "}
-                              • expire le{" "}
-                              {new Date(course.boost_expires_at).toLocaleDateString()}
+                              {" "}• expire le{" "}{new Date(course.boost_expires_at).toLocaleDateString()}
                             </span>
                           )}
                         </p>
