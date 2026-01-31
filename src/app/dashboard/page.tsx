@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const formatPrice = (priceCents: number | null) =>
@@ -63,24 +64,33 @@ export default async function DashboardPage() {
 
     if (aActive !== bActive) return aActive ? -1 : 1;
 
-    // si les deux sont actifs, on met celui qui expire le plus tard en haut
     if (aActive && bActive) {
       const aExp = a.boost_expires_at ? new Date(a.boost_expires_at).getTime() : 0;
       const bExp = b.boost_expires_at ? new Date(b.boost_expires_at).getTime() : 0;
       if (aExp !== bExp) return bExp - aExp;
     }
 
-    // sinon par date de création (plus récent d'abord)
     const aCreated = new Date(a.created_at).getTime();
     const bCreated = new Date(b.created_at).getTime();
     return bCreated - aCreated;
   });
+
+  // ✅ Helper: base URL fiable (Vercel / local)
+  const getBaseUrl = () => {
+    const h = headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    const proto = h.get("x-forwarded-proto") ?? "http";
+    if (host) return `${proto}://${host}`;
+    // fallback (au cas où)
+    return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  };
 
   // 💳 BOOST STRIPE CHECKOUT (SERVER ACTION)
   const createBoostCheckoutAction = async (formData: FormData) => {
     "use server";
 
     const courseId = String(formData.get("courseId") ?? "");
+    if (!courseId) throw new Error("courseId manquant");
 
     const supabase = createSupabaseServerClient();
     const {
@@ -89,19 +99,30 @@ export default async function DashboardPage() {
 
     if (!user) redirect("/auth/login");
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const baseUrl = getBaseUrl();
 
     const res = await fetch(`${baseUrl}/api/stripe/boost`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseId }),
+      cache: "no-store",
     });
 
-    const data = await res.json();
+    let data: any = null;
+    try {
+      data = await res.json();
+    } catch {
+      // si jamais l’API renvoie pas du JSON
+      data = null;
+    }
+
+    if (!res.ok) {
+      throw new Error(data?.error || `Boost API error (${res.status})`);
+    }
 
     if (data?.url) redirect(data.url);
 
-    throw new Error(data?.error || "Impossible de créer la session Stripe (boost)");
+    throw new Error("URL Stripe manquante (boost)");
   };
 
   return (
@@ -179,17 +200,13 @@ export default async function DashboardPage() {
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Formations achetées</h2>
-            <span className="text-xs rounded-full bg-white/10 px-3 py-1">
-              Accès
-            </span>
+            <span className="text-xs rounded-full bg-white/10 px-3 py-1">Accès</span>
           </div>
 
           {purchases && purchases.length > 0 ? (
             <div className="space-y-3">
               {purchases.map((purchase: any) => {
                 const course = normalizeCourse(purchase.course);
-
-                // sécurité si jamais course null (RLS / suppression)
                 if (!course?.id) return null;
 
                 return (
