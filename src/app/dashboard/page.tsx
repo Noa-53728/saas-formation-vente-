@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createBoostCheckoutAction } from "@/app/actions/boost";
 
 const formatPrice = (priceCents: number | null) =>
   typeof priceCents === "number" ? `${(priceCents / 100).toFixed(2)} €` : "-";
 
-// 🔥 Corrige le fait que Supabase peut renvoyer un objet OU un tableau
 const normalizeCourse = (c: any) => {
   if (!c) return null;
   return Array.isArray(c) ? c[0] : c;
@@ -38,7 +37,6 @@ export default async function DashboardPage() {
     .eq("id", userId)
     .maybeSingle();
 
-  // ✅ Ajout des colonnes de boost
   const { data: authoredCoursesRaw } = await supabase
     .from("courses")
     .select("id, title, price_cents, created_at, boosted_at, boost_expires_at")
@@ -52,7 +50,6 @@ export default async function DashboardPage() {
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  // ✅ Détermine si boost actif + tri : boost actif en premier, ensuite date
   const now = new Date();
 
   const isBoostActive = (c: AuthoredCourse) =>
@@ -75,59 +72,8 @@ export default async function DashboardPage() {
     return bCreated - aCreated;
   });
 
-  // ✅ Helper: base URL fiable (Vercel / local)
-  const getBaseUrl = () => {
-    const h = headers();
-    const host = h.get("x-forwarded-host") ?? h.get("host");
-    const proto = h.get("x-forwarded-proto") ?? "http";
-    if (host) return `${proto}://${host}`;
-    // fallback (au cas où)
-    return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  };
-
-  // 💳 BOOST STRIPE CHECKOUT (SERVER ACTION)
-  const createBoostCheckoutAction = async (formData: FormData) => {
-    "use server";
-
-    const courseId = String(formData.get("courseId") ?? "");
-    if (!courseId) throw new Error("courseId manquant");
-
-    const supabase = createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) redirect("/auth/login");
-
-    const baseUrl = getBaseUrl();
-
-    const res = await fetch(`${baseUrl}/api/stripe/boost`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId }),
-      cache: "no-store",
-    });
-
-    let data: any = null;
-    try {
-      data = await res.json();
-    } catch {
-      // si jamais l’API renvoie pas du JSON
-      data = null;
-    }
-
-    if (!res.ok) {
-      throw new Error(data?.error || `Boost API error (${res.status})`);
-    }
-
-    if (data?.url) redirect(data.url);
-
-    throw new Error("URL Stripe manquante (boost)");
-  };
-
   return (
     <div className="grid gap-6">
-      {/* HEADER */}
       <div className="card">
         <p className="text-sm text-white/60">Bonjour</p>
         <h1 className="text-3xl font-semibold mt-2">
@@ -135,7 +81,6 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-white/70 mt-2">Voici un aperçu de votre activité.</p>
 
-        {/* BARRE DE RECHERCHE */}
         <form
           action="/search"
           method="GET"
@@ -144,19 +89,12 @@ export default async function DashboardPage() {
           <input
             name="q"
             placeholder="Rechercher une formation..."
-            className="flex-1 px-4 py-2 rounded-md
-                       bg-white/5 text-white
-                       placeholder:text-white/40
-                       border border-white/10
-                       focus:outline-none focus:ring-2 focus:ring-accent"
+            className="flex-1 px-4 py-2 rounded-md bg-white/5 text-white placeholder:text-white/40 border border-white/10 focus:outline-none focus:ring-2 focus:ring-accent"
           />
 
           <select
             name="category"
-            className="px-4 py-2 rounded-md
-                       bg-white/5 text-white
-                       border border-white/10
-                       focus:outline-none focus:ring-2 focus:ring-accent"
+            className="px-4 py-2 rounded-md bg-white/5 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-accent"
             defaultValue=""
           >
             <option value="" className="bg-[#0b0f1a] text-white">
@@ -194,9 +132,7 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      {/* CONTENU */}
       <div className="grid gap-4 md:grid-cols-2">
-        {/* FORMATIONS ACHETÉES */}
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Formations achetées</h2>
@@ -233,7 +169,6 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* VOS FORMATIONS */}
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Vos formations</h2>
@@ -256,7 +191,6 @@ export default async function DashboardPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-medium truncate">{course.title}</p>
-
                           {active && (
                             <span className="text-[11px] rounded-full bg-accent/20 border border-accent/30 text-accent px-2 py-0.5">
                               Boost actif
@@ -284,7 +218,6 @@ export default async function DashboardPage() {
                       </Link>
                     </div>
 
-                    {/* ACTION BOOST */}
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <p className="text-xs text-white/50">
                         {active
