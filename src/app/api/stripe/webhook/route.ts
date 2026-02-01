@@ -1,94 +1,133 @@
-import Stripe from "stripe";
+import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
-});
+export const runtime = "nodejs";
+
+async function isProcessed(supabase: ReturnType<typeof createSupabaseAdminClient>, eventId: string) {
+  const { data } = await supabase
+    .from("stripe_webhook_events")
+    .select("id")
+    .eq("id", eventId)
+    .maybeSingle();
+  return !!data?.id;
+}
+
+async function markProcessed(supabase: ReturnType<typeof createSupabaseAdminClient>, event: Stripe.Event) {
+  const { error } = await supabase.from("stripe_webhook_events").insert({
+    id: event.id,
+    type: event.type,
+  });
+  if (error) throw error;
+}
 
 export async function POST(req: Request) {
-  const body = await req.text();
   const signature = headers().get("stripe-signature");
+  if (!signature) return new NextResponse("Missing signature", { status: 400 });
 
-  if (!signature) {
-    return new Response("Missing signature", { status: 400 });
-  }
+  const rawBody = await req.text();
 
   let event: Stripe.Event;
-
   try {
     event = stripe.webhooks.constructEvent(
-      body,
+      rawBody,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch {
-    return new Response("Webhook error", { status: 400 });
+    return new NextResponse("Invalid signature", { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const supabase = createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
 
-    const type = session.metadata?.type;
+  // Idempotence
+  if (await isProcessed(supabase, event.id)) {
+    return new NextResponse("OK", { status: 200 });
+  }
 
-    /* =========================
-       🔥 BOOST 7 JOURS
-    ========================== */
-    if (type === "boost") {
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      const type = session.metadata?.type;
       const courseId = session.metadata?.course_id;
       const userId = session.metadata?.user_id;
 
-      if (!courseId || !userId) {
-        return new Response("Missing boost metadata", { status: 400 });
+      if (!type || !courseId || !userId) {
+        await markProcessed(supabase, event);
+        return new NextResponse("OK", { status: 200 });
       }
 
-      // 🔒 sécurité : vérifier que le cours appartient bien au vendeur
-      const { data: course } = await supabase
-        .from("courses")
-        .select("id, author_id")
-        .eq("id", courseId)
-        .maybeSingle();
+      // ===== BOOST =====
+      if (type === "boost") {
+        const { data: course, error } = await supabase
+          .from("courses")
+          .select("id, author_id")
+          .eq("id", courseId)
+          .maybeSingle();
 
-      if (!course || course.author_id !== userId) {
-        return new Response("Forbidden boost", { status: 403 });
+        if (error) throw error;
+        if (!course || course.author_id !== userId) {
+          await markProcessed(supabase, event);
+          return new NextResponse("Forbidden boost", { status: 200 });
+        }
+
+        const now = new Date();
+        const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        const { error: updErr } = await supabase
+          .from("courses")
+          .update({
+            boosted_at: now.toISOString(),
+            boost_expires_at: expires.toISOString(),
+          })
+          .eq("id", courseId);
+
+        if (updErr) throw updErr;
+
+        await markProcessed(supabase, event);
+        return new NextResponse("OK", { status: 200 });
       }
 
-      const now = new Date();
-      const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      // ===== PURCHASE =====
+      if (type === "purchase") {
+        const amountTotal = session.amount_total ?? 0;
+        const currency = session.currency ?? "eur";
+        const paymentIntent =
+          typeof session.payment_intent === "string" ? session.payment_intent : null;
 
-      await supabase
-        .from("courses")
-        .update({
-          boosted_at: now.toISOString(),
-          boost_expires_at: expires.toISOString(),
-        })
-        .eq("id", courseId);
+        const { error: orderErr } = await supabase.from("orders").upsert(
+          {
+            user_id: userId,
+            course_id: courseId,
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: paymentIntent,
+            amount_cents: amountTotal,
+            currency,
+            status: "paid",
+          },
+          { onConflict: "stripe_checkout_session_id" }
+        );
+        if (orderErr) throw orderErr;
 
-      return new Response("Boost applied", { status: 200 });
+        const { error: entErr } = await supabase.from("entitlements").upsert(
+          { user_id: userId, course_id: courseId, source: "purchase" },
+          { onConflict: "user_id,course_id" }
+        );
+        if (entErr) throw entErr;
+
+        await markProcessed(supabase, event);
+        return new NextResponse("OK", { status: 200 });
+      }
     }
 
-    /* =========================
-       🛒 ACHAT FORMATION
-       (si tu l’utilises encore)
-    ========================== */
-    if (type === "purchase") {
-      const courseId = session.metadata?.course_id;
-      const userId = session.metadata?.user_id;
-
-      if (!courseId || !userId) {
-        return new Response("Missing purchase metadata", { status: 400 });
-      }
-
-      await supabase.from("purchases").insert({
-        user_id: userId,
-        course_id: courseId,
-        amount_cents: session.amount_total ?? 0,
-      });
-
-      return new Response("Purchase recorded", { status: 200 });
-    }
+    // Even if event type ignored, mark processed to avoid retries
+    await markProcessed(supabase, event);
+    return new NextResponse("OK", { status: 200 });
+  } catch {
+    // Do not mark processed on failure -> Stripe retries
+    return new NextResponse("Webhook failed", { status: 500 });
   }
-
-  return new Response("Ignored", { status: 200 });
 }
