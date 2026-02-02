@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   // 3) Créer customer Stripe si besoin
   if (!stripeCustomerId || stripeCustomerId === "pending") {
     const customer = await stripe.customers.create({
-      metadata: { userId: user.id },
+      metadata: { user_id: user.id },
     });
     stripeCustomerId = customer.id;
 
@@ -65,10 +65,23 @@ export async function POST(req: Request) {
     line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
     success_url: `${appUrl}/dashboard/billing?checkout=success`,
     cancel_url: `${appUrl}/dashboard/billing?checkout=cancel`,
+
+    // ✅ lien durable user ↔ session
+    client_reference_id: user.id,
+
+    // ✅ metadata sur la session (utile pour checkout.session.completed)
     metadata: {
       user_id: user.id,
       type: "subscription",
       plan_id: planId,
+    },
+
+    // ✅ metadata sur la subscription (utile pour customer.subscription.*)
+    subscription_data: {
+      metadata: {
+        user_id: user.id,
+        plan_id: planId,
+      },
     },
   });
 
