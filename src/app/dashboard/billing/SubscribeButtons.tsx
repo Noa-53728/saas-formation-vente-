@@ -19,8 +19,12 @@ export default function SubscribeButtons() {
 
   return (
     <div style={{ display: "flex", gap: 12 }}>
-      <button onClick={() => subscribe("creator")}>Creator (10$ / mois)</button>
-      <button onClick={() => subscribe("pro")}>Pro (30$ / mois)</button>
+      <button onClick={() => subscribe("creator")}>
+        Creator – 10$ / mois
+      </button>
+      <button onClick={() => subscribe("pro")}>
+        Pro – 30$ / mois
+      </button>
     </div>
   );
 }
