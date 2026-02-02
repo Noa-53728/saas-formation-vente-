@@ -30,10 +30,10 @@ export default async function BillingPage() {
         Plan actuel : <strong>{planId}</strong>
       </p>
 
-      {/* Free: show both */}
-      {planId === "free" && <SubscribeButtons showCreator showPro />}
+      {planId === "free" && (
+        <SubscribeButtons showCreator showPro />
+      )}
 
-      {/* Creator: show only Pro upgrade */}
       {planId === "creator" && (
         <>
           <h2>Upgrade</h2>
@@ -41,8 +41,9 @@ export default async function BillingPage() {
         </>
       )}
 
-      {/* Pro: no upgrade buttons */}
-      {planId === "pro" && <p>Tu es déjà sur le plan maximum.</p>}
+      {planId === "pro" && (
+        <p>Tu es déjà sur le plan maximum.</p>
+      )}
     </div>
   );
 }
