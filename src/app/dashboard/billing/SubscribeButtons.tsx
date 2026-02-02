@@ -1,26 +1,34 @@
-"use client";
+import SubscribeButtons from "./SubscribeButtons";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-export default function SubscribeButtons() {
-  const subscribe = async (planId: "creator" | "pro") => {
-    const res = await fetch("/api/stripe/subscription/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planId }),
-    });
+export default async function BillingPage() {
+  const supabase = createSupabaseServerClient();
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || "checkout failed");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let planId = "free";
+
+  if (user) {
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("plan_id, status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (sub && ["active", "trialing"].includes(sub.status)) {
+      planId = sub.plan_id;
     }
-
-    const { url } = await res.json();
-    window.location.href = url;
-  };
+  }
 
   return (
-    <div style={{ display: "flex", gap: 12 }}>
-      <button onClick={() => subscribe("creator")}>Creator – 10$ / mois</button>
-      <button onClick={() => subscribe("pro")}>Pro – 30$ / mois</button>
+    <div style={{ padding: 24 }}>
+      <h1>Abonnement</h1>
+      <p>
+        Plan actuel : <strong>{planId}</strong>
+      </p>
+      {planId === "free" && <SubscribeButtons />}
     </div>
   );
 }
