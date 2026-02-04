@@ -6,7 +6,10 @@ import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
-async function isProcessed(supabase: ReturnType<typeof createSupabaseAdminClient>, eventId: string) {
+async function isProcessed(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  eventId: string
+) {
   const { data } = await supabase
     .from("stripe_webhook_events")
     .select("id")
@@ -15,11 +18,40 @@ async function isProcessed(supabase: ReturnType<typeof createSupabaseAdminClient
   return !!data?.id;
 }
 
-async function markProcessed(supabase: ReturnType<typeof createSupabaseAdminClient>, event: Stripe.Event) {
+async function markProcessed(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  event: Stripe.Event
+) {
   const { error } = await supabase.from("stripe_webhook_events").insert({
     id: event.id,
     type: event.type,
   });
+  if (error) throw error;
+}
+
+async function upsertSubscription(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  sub: Stripe.Subscription
+) {
+  const userId = sub.metadata?.user_id as string | undefined;
+  const planId = (sub.metadata?.plan_id as string | undefined) ?? "free";
+
+  if (!userId) return;
+
+  const { error } = await supabase.from("subscriptions").upsert(
+    {
+      user_id: userId,
+      plan_id: planId,
+      status: sub.status,
+      stripe_customer_id: sub.customer as string,
+      stripe_subscription_id: sub.id,
+      current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+      cancel_at_period_end: sub.cancel_at_period_end,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_subscription_id" }
+  );
+
   if (error) throw error;
 }
 
@@ -48,9 +80,25 @@ export async function POST(req: Request) {
   }
 
   try {
+    // =========================
+    // SUBSCRIPTIONS
+    // =========================
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
+      // Abonnement : on récupère la subscription Stripe et on sync Supabase
+      if (session.mode === "subscription" && session.subscription) {
+        const sub = await stripe.subscriptions.retrieve(
+          session.subscription as string
+        );
+        await upsertSubscription(supabase, sub);
+
+        await markProcessed(supabase, event);
+        return new NextResponse("OK", { status: 200 });
+      }
+
+      // Paiement one-shot (boost/purchase) : logique existante
       const type = session.metadata?.type;
       const courseId = session.metadata?.course_id;
       const userId = session.metadata?.user_id;
@@ -96,7 +144,9 @@ export async function POST(req: Request) {
         const amountTotal = session.amount_total ?? 0;
         const currency = session.currency ?? "eur";
         const paymentIntent =
-          typeof session.payment_intent === "string" ? session.payment_intent : null;
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : null;
 
         const { error: orderErr } = await supabase.from("orders").upsert(
           {
@@ -121,6 +171,38 @@ export async function POST(req: Request) {
         await markProcessed(supabase, event);
         return new NextResponse("OK", { status: 200 });
       }
+    }
+
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated"
+    ) {
+      const sub = event.data.object as Stripe.Subscription;
+      await upsertSubscription(supabase, sub);
+
+      await markProcessed(supabase, event);
+      return new NextResponse("OK", { status: 200 });
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const sub = event.data.object as Stripe.Subscription;
+
+      const userId = sub.metadata?.user_id as string | undefined;
+      if (userId) {
+        const { error } = await supabase
+          .from("subscriptions")
+          .update({
+            plan_id: "free",
+            status: "canceled",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId);
+
+        if (error) throw error;
+      }
+
+      await markProcessed(supabase, event);
+      return new NextResponse("OK", { status: 200 });
     }
 
     // Even if event type ignored, mark processed to avoid retries
