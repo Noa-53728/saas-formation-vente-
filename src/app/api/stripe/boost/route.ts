@@ -1,60 +1,61 @@
 import Stripe from "stripe";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
 });
 
-function getBaseUrl() {
-  const h = headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  if (host) return `${proto}://${host}`;
-  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-}
+export async function POST(req: Request) {
+  try {
+    const { courseId } = await req.json();
 
-export async function GET(req: Request) {
-  const supabase = createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+    if (!courseId) {
+      return NextResponse.json({ error: "courseId manquant" }, { status: 400 });
+    }
 
-  const url = new URL(req.url);
-  const courseId = url.searchParams.get("courseId");
-  if (!courseId) return new Response("courseId manquant", { status: 400 });
+    const priceId = process.env.STRIPE_BOOST_PRICE_ID;
+    if (!priceId) {
+      return NextResponse.json({ error: "STRIPE_BOOST_PRICE_ID manquant" }, { status: 500 });
+    }
 
-  const { data: course } = await supabase
-    .from("courses")
-    .select("id, author_id, title")
-    .eq("id", courseId)
-    .maybeSingle();
+    const supabase = createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
 
-  if (!course) return new Response("Formation introuvable", { status: 404 });
-  if (course.author_id !== user.id) return new Response("Interdit", { status: 403 });
+    // sécurité: vérifier que le cours appartient au user
+    const { data: course } = await supabase
+      .from("courses")
+      .select("id, author_id")
+      .eq("id", courseId)
+      .maybeSingle();
 
-  const baseUrl = getBaseUrl();
+    if (!course || course.author_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price: process.env.STRIPE_BOOST_PRICE_ID!,
-        quantity: 1,
+    const origin = req.headers.get("origin") ?? "http://localhost:3000";
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/dashboard?boost=success`,
+      cancel_url: `${origin}/dashboard?boost=cancel`,
+      metadata: {
+        type: "boost",
+        course_id: courseId,
+        user_id: user.id,
       },
-    ],
-    success_url: `${baseUrl}/dashboard?boost=success`,
-    cancel_url: `${baseUrl}/dashboard?boost=cancel`,
-    metadata: {
-      type: "boost",
-      user_id: user.id,
-      course_id: course.id,
-      duration_days: "7",
-    },
-  });
+    });
 
-  if (!session.url) return new Response("Stripe session sans URL", { status: 500 });
-
-  redirect(session.url);
+    return NextResponse.json({ url: session.url }, { status: 200 });
+  } catch (err: any) {
+    console.error("BOOST_API_ERROR:", err?.message, err);
+    return NextResponse.json(
+      { error: err?.message ?? "Erreur inconnue" },
+      { status: 500 }
+    );
+  }
 }

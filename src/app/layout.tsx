@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const metadata: Metadata = {
   title: "Formio | Vendez et achetez vos formations",
-  description: "Une plateforme simple pour vendre et acheter des formations vidéo + PDF"
+  description: "Une plateforme simple pour vendre et acheter des formations vidéo + PDF",
 };
 
-export default function RootLayout({
-  children
+export default async function RootLayout({
+  children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createSupabaseServerClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const isLoggedIn = !!session;
+
   return (
     <html lang="fr">
       <body className="antialiased">
@@ -22,18 +31,23 @@ export default function RootLayout({
               </div>
               <div>
                 <p className="text-xl font-semibold">Formio</p>
-                <p className="text-sm text-white/60">Formations vidéo + PDF</p>
+                <p className="text-sm text-white/60">
+                  Formations vidéo + PDF
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-sm">
-              <a className="button-secondary" href="/auth/login">
-                Se connecter
-              </a>
-              <a className="button-primary" href="/auth/register">
-                Créer un compte
-              </a>
-            </div>
+            {/* 🔐 BOUTONS AUTH — seulement si non connecté */}
+            {!isLoggedIn && (
+              <div className="flex items-center gap-3 text-sm">
+                <a className="button-secondary" href="/auth/login">
+                  Se connecter
+                </a>
+                <a className="button-primary" href="/auth/register">
+                  Créer un compte
+                </a>
+              </div>
+            )}
           </header>
 
           <main>{children}</main>
@@ -42,3 +56,4 @@ export default function RootLayout({
     </html>
   );
 }
+
