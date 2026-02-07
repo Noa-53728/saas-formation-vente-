@@ -46,20 +46,6 @@ export default async function DashboardPage() {
   const isBoostActive = (c: AuthoredCourse) =>
     !!c.boost_expires_at && new Date(c.boost_expires_at) > now;
 
-  const sortedAuthoredCourses = [...authoredCourses].sort((a, b) => {
-    const aActive = isBoostActive(a);
-    const bActive = isBoostActive(b);
-    if (aActive !== bActive) return aActive ? -1 : 1;
-
-    if (aActive && bActive) {
-      const aExp = a.boost_expires_at ? new Date(a.boost_expires_at).getTime() : 0;
-      const bExp = b.boost_expires_at ? new Date(b.boost_expires_at).getTime() : 0;
-      if (aExp !== bExp) return bExp - aExp;
-    }
-
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
-
   // ===== KPIs =====
   const totalCourses = authoredCourses.length;
   const activeBoosts = authoredCourses.filter(isBoostActive).length;
@@ -74,7 +60,6 @@ export default async function DashboardPage() {
   }, 0);
 
   const lastPurchases = purchasesList.slice(0, 5);
-  const lastAuthored = sortedAuthoredCourses.slice(0, 5);
 
   return (
     <div className="grid gap-6">
@@ -88,6 +73,9 @@ export default async function DashboardPage() {
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
           <Link className="button-primary w-fit" href="/courses/new">
             Publier une formation
+          </Link>
+          <Link className="button-secondary w-fit" href="/dashboard/courses">
+            Mes formations
           </Link>
           <Link className="button-secondary w-fit" href="/dashboard/billing">
             Gérer l’abonnement
@@ -171,8 +159,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Activité récente */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Activité récente (achats) */}
+      <div className="grid gap-4 md:grid-cols-1">
         <div className="card space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Activité récente</h2>
@@ -206,80 +194,6 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <p className="text-white/70 text-sm">Aucune activité récente.</p>
-          )}
-        </div>
-
-        <div className="card space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Vos formations</h2>
-            <Link className="text-sm text-accent" href="/courses/new">
-              Publier
-            </Link>
-          </div>
-
-          {lastAuthored.length > 0 ? (
-            <div className="space-y-3">
-              {lastAuthored.map((course) => {
-                const active = isBoostActive(course);
-
-                return (
-                  <div
-                    key={course.id}
-                    className="p-3 rounded-lg bg-white/5 border border-white/10"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium truncate">{course.title}</p>
-                          {active && (
-                            <span className="text-[11px] rounded-full bg-accent/20 border border-accent/30 text-accent px-2 py-0.5">
-                              Boost actif
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-white/60 mt-1">
-                          {formatPrice(course.price_cents)}
-                          {active && course.boost_expires_at && (
-                            <span className="text-white/40">
-                              {" "}
-                              • expire le{" "}
-                              {new Date(course.boost_expires_at).toLocaleDateString()}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-
-                      <Link
-                        href={`/dashboard/courses/${course.id}/edit`}
-                        className="text-xs text-accent whitespace-nowrap"
-                      >
-                        Gérer
-                      </Link>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between gap-3">
-                      <p className="text-xs text-white/50">
-                        {active
-                          ? "Mise en avant active."
-                          : "Mettez votre formation en haut des résultats (7 jours)."}
-                      </p>
-
-                      {!active && (
-                        <Link
-                          href={`/api/stripe/boost?courseId=${course.id}`}
-                          className="text-xs rounded-lg px-3 py-2 bg-accent text-white hover:opacity-90 transition whitespace-nowrap"
-                        >
-                          Booster • 4,99 €
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-white/70 text-sm">Ajoutez vos formations ici.</p>
           )}
         </div>
       </div>
