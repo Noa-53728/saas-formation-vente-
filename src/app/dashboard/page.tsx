@@ -22,7 +22,9 @@ type AuthoredCourse = {
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) redirect("/auth/login");
 
   const userId = session.user.id;
@@ -74,6 +76,23 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-white/70 mt-2">Voici un aperçu de votre activité.</p>
 
+        {/* Abonnement: accès direct à /dashboard/billing */}
+        <div className="mt-6 flex items-center justify-between rounded-xl bg-white/5 border border-white/10 p-4">
+          <div>
+            <p className="text-sm text-white/60">Abonnement</p>
+            <p className="text-white/80 text-sm mt-1">
+              Gérez votre plan (Creator / Pro) et vos avantages.
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard/billing"
+            className="text-sm rounded-lg px-4 py-2 bg-white/10 hover:bg-white/15 border border-white/10"
+          >
+            Gérer
+          </Link>
+        </div>
+
         <form
           action="/search"
           method="GET"
@@ -90,18 +109,38 @@ export default async function DashboardPage() {
             className="px-4 py-2 rounded-md bg-white/5 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-accent"
             defaultValue=""
           >
-            <option value="" className="bg-[#0b0f1a] text-white">Toutes les catégories</option>
-            <option value="business" className="bg-[#0b0f1a] text-white">Business & entrepreneuriat</option>
-            <option value="marketing" className="bg-[#0b0f1a] text-white">Marketing digital</option>
-            <option value="tech" className="bg-[#0b0f1a] text-white">Tech & Digital</option>
-            <option value="education" className="bg-[#0b0f1a] text-white">Éducation</option>
-            <option value="dev_perso" className="bg-[#0b0f1a] text-white">Développement personnel</option>
-            <option value="sport" className="bg-[#0b0f1a] text-white">Sport & Santé</option>
-            <option value="creatif" className="bg-[#0b0f1a] text-white">Créatif</option>
-            <option value="autre" className="bg-[#0b0f1a] text-white">Autre</option>
+            <option value="" className="bg-[#0b0f1a] text-white">
+              Toutes les catégories
+            </option>
+            <option value="business" className="bg-[#0b0f1a] text-white">
+              Business & entrepreneuriat
+            </option>
+            <option value="marketing" className="bg-[#0b0f1a] text-white">
+              Marketing digital
+            </option>
+            <option value="tech" className="bg-[#0b0f1a] text-white">
+              Tech & Digital
+            </option>
+            <option value="education" className="bg-[#0b0f1a] text-white">
+              Éducation
+            </option>
+            <option value="dev_perso" className="bg-[#0b0f1a] text-white">
+              Développement personnel
+            </option>
+            <option value="sport" className="bg-[#0b0f1a] text-white">
+              Sport & Santé
+            </option>
+            <option value="creatif" className="bg-[#0b0f1a] text-white">
+              Créatif
+            </option>
+            <option value="autre" className="bg-[#0b0f1a] text-white">
+              Autre
+            </option>
           </select>
 
-          <button className="button-primary" type="submit">Rechercher</button>
+          <button className="button-primary" type="submit">
+            Rechercher
+          </button>
         </form>
       </div>
 
@@ -127,7 +166,9 @@ export default async function DashboardPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="font-medium">{course.title}</p>
-                        <p className="text-xs text-white/60">{formatPrice(course.price_cents ?? null)}</p>
+                        <p className="text-xs text-white/60">
+                          {formatPrice(course.price_cents ?? null)}
+                        </p>
                       </div>
                       <span className="text-xs text-accent">Voir</span>
                     </div>
@@ -143,7 +184,9 @@ export default async function DashboardPage() {
         <div className="card space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Vos formations</h2>
-            <Link className="text-sm text-accent" href="/courses/new">Publier une formation</Link>
+            <Link className="text-sm text-accent" href="/courses/new">
+              Publier une formation
+            </Link>
           </div>
 
           {sortedAuthoredCourses.length > 0 ? (
@@ -152,7 +195,10 @@ export default async function DashboardPage() {
                 const active = isBoostActive(course);
 
                 return (
-                  <div key={course.id} className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div
+                    key={course.id}
+                    className="p-3 rounded-lg bg-white/5 border border-white/10"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
@@ -168,7 +214,9 @@ export default async function DashboardPage() {
                           {formatPrice(course.price_cents)}
                           {active && course.boost_expires_at && (
                             <span className="text-white/40">
-                              {" "}• expire le{" "}{new Date(course.boost_expires_at).toLocaleDateString()}
+                              {" "}
+                              • expire le{" "}
+                              {new Date(course.boost_expires_at).toLocaleDateString()}
                             </span>
                           )}
                         </p>
