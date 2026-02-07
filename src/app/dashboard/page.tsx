@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -22,18 +21,12 @@ type AuthoredCourse = {
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
 
+  // ✅ Auth + redirect gérés par /dashboard/layout.tsx
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const userId = session.user.id;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, is_seller")
-    .eq("id", userId)
-    .maybeSingle();
+  const userId = user!.id;
 
   const { data: authoredCoursesRaw } = await supabase
     .from("courses")
@@ -70,10 +63,8 @@ export default async function DashboardPage() {
   return (
     <div className="grid gap-6">
       <div className="card">
-        <p className="text-sm text-white/60">Bonjour</p>
-        <h1 className="text-3xl font-semibold mt-2">
-          {profile?.full_name ?? "Créateur"}
-        </h1>
+        <p className="text-sm text-white/60">Dashboard</p>
+        <h1 className="text-3xl font-semibold mt-2">Vue d’ensemble</h1>
         <p className="text-white/70 mt-2">Voici un aperçu de votre activité.</p>
 
         {/* Abonnement: accès direct à /dashboard/billing */}
