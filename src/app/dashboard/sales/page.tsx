@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
@@ -9,8 +11,6 @@ type OrderRow = {
   amount_cents: number;
   status: string;
   course_id: string;
-  buyer_id?: string | null;
-  user_id?: string | null;
 };
 
 export default async function SalesPage() {
@@ -19,18 +19,34 @@ export default async function SalesPage() {
 
   const {
     data: { user },
+    error: userErr,
   } = await supabase.auth.getUser();
 
-  const userId = user!.id;
+  if (userErr || !user) {
+    return (
+      <div className="card">
+        Erreur auth: {userErr?.message ?? "no user"}
+      </div>
+    );
+  }
 
-  // 1) Récupérer les IDs des cours du créateur (source de vérité)
+  const userId = user.id;
+
+  // 1) Cours du créateur
   const { data: myCourses, error: coursesErr } = await admin
     .from("courses")
-    .select("id, title")
+    .select("id, title, author_id")
     .eq("author_id", userId);
 
   if (coursesErr) {
-    return <div className="card">Erreur chargement des cours.</div>;
+    return (
+      <div className="card">
+        <p className="font-semibold">Erreur chargement des cours</p>
+        <pre className="text-xs whitespace-pre-wrap mt-3">
+          {JSON.stringify(coursesErr, null, 2)}
+        </pre>
+      </div>
+    );
   }
 
   const courseIds = (myCourses ?? []).map((c) => c.id);
@@ -48,17 +64,24 @@ export default async function SalesPage() {
     );
   }
 
-  // 2) Récupérer les ventes dans orders (sans jointure)
+  // 2) Ventes
   const { data: ordersRaw, error: ordersErr } = await admin
     .from("orders")
-    .select("id, created_at, amount_cents, status, course_id, buyer_id, user_id")
+    .select("id, created_at, amount_cents, status, course_id")
     .eq("status", "paid")
     .in("course_id", courseIds)
     .order("created_at", { ascending: false })
     .limit(200);
 
   if (ordersErr) {
-    return <div className="card">Erreur chargement des ventes.</div>;
+    return (
+      <div className="card">
+        <p className="font-semibold">Erreur chargement des ventes</p>
+        <pre className="text-xs whitespace-pre-wrap mt-3">
+          {JSON.stringify(ordersErr, null, 2)}
+        </pre>
+      </div>
+    );
   }
 
   const orders = (ordersRaw ?? []) as OrderRow[];
@@ -113,7 +136,7 @@ export default async function SalesPage() {
               <div key={o.id} className="py-3 flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <p className="font-medium truncate">
-                    {titleById.get(o.course_id) ?? "Formation"}
+                    {titleById.get(o.course_id) ?? o.course_id}
                   </p>
                   <p className="text-xs text-white/50">
                     {new Date(o.created_at).toLocaleString()}
