@@ -11,12 +11,6 @@ interface ConversationPreview {
   created_at: string;
 }
 
-// 🔥 Normalise sender/receiver (objet OU tableau Supabase)
-const normalizeUser = (u: any) => {
-  if (!u) return null;
-  return Array.isArray(u) ? u[0] : u;
-};
-
 export default async function MessagesPage() {
   const supabase = createSupabaseServerClient();
   const { data: sessionData } = await supabase.auth.getSession();
@@ -26,36 +20,91 @@ export default async function MessagesPage() {
     redirect("/auth/login");
   }
 
-  const { data: rows } = await supabase
+  const userId = session.user.id;
+
+  // 1) Récupérer tous les messages où je suis impliqué
+  const { data: rows, error: messagesErr } = await supabase
     .from("messages")
-    .select(
-      "id, content, created_at, course_id, sender_id, receiver_id, courses(title), sender:profiles!messages_sender_id_fkey(full_name), receiver:profiles!messages_receiver_id_fkey(full_name)"
-    )
-    .or(`sender_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`)
+    .select("id, content, created_at, course_id, sender_id, receiver_id")
+    .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
     .order("created_at", { ascending: false });
 
+  if (messagesErr) {
+    return (
+      <div className="card">
+        <p className="font-semibold">Erreur chargement des conversations</p>
+        <pre className="text-xs whitespace-pre-wrap mt-3">
+          {JSON.stringify(messagesErr, null, 2)}
+        </pre>
+      </div>
+    );
+  }
+
+  const messages = rows ?? [];
+
+  // 2) Récupérer les titres de formations et les noms des partenaires
+  const courseIdSet = new Set<string>();
+  const partnerIdSet = new Set<string>();
+
+  messages.forEach((row) => {
+    courseIdSet.add(row.course_id);
+
+    const isSenderMe = row.sender_id === userId;
+    const isReceiverMe = row.receiver_id === userId;
+
+    if (!isSenderMe && !isReceiverMe) return;
+
+    const partnerId = isSenderMe ? row.receiver_id : row.sender_id;
+    if (partnerId) {
+      partnerIdSet.add(partnerId);
+    }
+  });
+
+  let courseTitleById = new Map<string, string>();
+  let nameById = new Map<string, string>();
+
+  if (courseIdSet.size > 0) {
+    const { data: courses } = await supabase
+      .from("courses")
+      .select("id, title")
+      .in("id", Array.from(courseIdSet));
+
+    if (courses) {
+      courseTitleById = new Map(
+        courses.map((c: any) => [c.id as string, (c.title as string) ?? ""]),
+      );
+    }
+  }
+
+  if (partnerIdSet.size > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", Array.from(partnerIdSet));
+
+    if (profiles) {
+      nameById = new Map(
+        profiles.map((p: any) => [
+          p.id as string,
+          (p.full_name as string) ?? "",
+        ]),
+      );
+    }
+  }
+
+  // 3) Construire les conversations (1 par cours + partenaire)
   const conversations = new Map<string, ConversationPreview>();
 
-  rows?.forEach((row: any) => {
-    const sender = normalizeUser(row.sender);
-    const receiver = normalizeUser(row.receiver);
+  messages.forEach((row: any) => {
+    const isSenderMe = row.sender_id === userId;
+    const isReceiverMe = row.receiver_id === userId;
 
-    const partnerId =
-      row.sender_id === session.user.id ? row.receiver_id : row.sender_id;
+    if (!isSenderMe && !isReceiverMe) return;
 
-    const partnerName =
-      row.sender_id === session.user.id
-        ? receiver?.full_name
-        : sender?.full_name;
+    const partnerId = isSenderMe ? row.receiver_id : row.sender_id;
+    const partnerName = nameById.get(partnerId) || "Contact";
 
-    // ✅ ICI on gère le fait que "courses" est un tableau
-    let courseTitle = "Formation";
-    if (Array.isArray(row.courses)) {
-      courseTitle = row.courses[0]?.title ?? "Formation";
-    } else if (row.courses?.title) {
-      courseTitle = row.courses.title;
-    }
-
+    const courseTitle = courseTitleById.get(row.course_id) ?? "Formation";
     const key = `${row.course_id}-${partnerId}`;
 
     if (!conversations.has(key)) {
@@ -64,9 +113,9 @@ export default async function MessagesPage() {
         course_id: row.course_id,
         course_title: courseTitle,
         partner_id: partnerId,
-        partner_name: partnerName || "Contact",
+        partner_name: partnerName,
         last_message: row.content,
-        created_at: row.created_at
+        created_at: row.created_at,
       });
     }
   });
@@ -114,4 +163,5 @@ export default async function MessagesPage() {
     </div>
   );
 }
+
 

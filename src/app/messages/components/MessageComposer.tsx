@@ -9,7 +9,11 @@ interface MessageComposerProps {
   placeholder?: string;
 }
 
-export function MessageComposer({ courseId, receiverId, placeholder }: MessageComposerProps) {
+export function MessageComposer({
+  courseId,
+  receiverId,
+  placeholder,
+}: MessageComposerProps) {
   const [content, setContent] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -24,9 +28,9 @@ export function MessageComposer({ courseId, receiverId, placeholder }: MessageCo
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ courseId, receiverId, content })
+        body: JSON.stringify({ courseId, receiverId, content }),
       });
 
       const payload = await response.json();
@@ -59,3 +63,4 @@ export function MessageComposer({ courseId, receiverId, placeholder }: MessageCo
 }
 
 export default MessageComposer;
+

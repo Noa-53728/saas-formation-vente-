@@ -25,7 +25,8 @@ export function ConversationMessages({
   partnerId,
 }: ConversationMessagesProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages ?? []);
-  const supabaseRef = useRef<ReturnType<typeof createSupabaseBrowserClient> | null>(null);
+  const supabaseRef =
+    useRef<ReturnType<typeof createSupabaseBrowserClient> | null>(null);
 
   useEffect(() => {
     // Réinitialiser les messages si la conversation change (changement de route)

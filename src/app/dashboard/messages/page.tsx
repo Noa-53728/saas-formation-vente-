@@ -12,11 +12,6 @@ type ConversationPreview = {
   created_at: string;
 };
 
-const normalizeUser = (u: any) => {
-  if (!u) return null;
-  return Array.isArray(u) ? u[0] : u;
-};
-
 export default async function DashboardMessagesPage() {
   const supabase = createSupabaseServerClient();
   const { data: sessionData } = await supabase.auth.getSession();
@@ -64,9 +59,7 @@ export default async function DashboardMessagesPage() {
   // 2) Récupérer les messages liés à ces cours
   const { data: rows, error: messagesErr } = await supabase
     .from("messages")
-    .select(
-      "id, content, created_at, course_id, sender_id, receiver_id, sender:profiles!messages_sender_id_fkey(full_name), receiver:profiles!messages_receiver_id_fkey(full_name)"
-    )
+    .select("id, content, created_at, course_id, sender_id, receiver_id")
     .in("course_id", courseIds)
     .order("created_at", { ascending: false });
 
@@ -81,13 +74,44 @@ export default async function DashboardMessagesPage() {
     );
   }
 
+  const messages = rows ?? [];
+
+  // 2b) Récupérer les noms des partenaires
+  const partnerIdSet = new Set<string>();
+
+  messages.forEach((row) => {
+    const isSenderMe = row.sender_id === userId;
+    const isReceiverMe = row.receiver_id === userId;
+    if (!isSenderMe && !isReceiverMe) return;
+
+    const partnerId = isSenderMe ? row.receiver_id : row.sender_id;
+    if (partnerId) {
+      partnerIdSet.add(partnerId);
+    }
+  });
+
+  let nameById = new Map<string, string>();
+
+  if (partnerIdSet.size > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", Array.from(partnerIdSet));
+
+    if (profiles) {
+      nameById = new Map(
+        profiles.map((p: any) => [
+          p.id as string,
+          (p.full_name as string) ?? "",
+        ]),
+      );
+    }
+  }
+
   // 3) Construire les conversations (1 par cours + partenaire)
   const conversations = new Map<string, ConversationPreview>();
 
-  rows?.forEach((row: any) => {
-    const sender = normalizeUser(row.sender);
-    const receiver = normalizeUser(row.receiver);
-
+  messages.forEach((row: any) => {
     // Dans le contexte vendeur, partner = l'autre personne que moi
     const isSenderMe = row.sender_id === userId;
     const isReceiverMe = row.receiver_id === userId;
@@ -96,7 +120,7 @@ export default async function DashboardMessagesPage() {
     if (!isSenderMe && !isReceiverMe) return;
 
     const partnerId = isSenderMe ? row.receiver_id : row.sender_id;
-    const partnerName = isSenderMe ? receiver?.full_name : sender?.full_name;
+    const partnerName = nameById.get(partnerId) || "Contact";
 
     const courseTitle = titleById.get(row.course_id) ?? "Formation";
     const key = `${row.course_id}-${partnerId}`;
@@ -107,7 +131,7 @@ export default async function DashboardMessagesPage() {
         course_id: row.course_id,
         course_title: courseTitle,
         partner_id: partnerId,
-        partner_name: partnerName || "Contact",
+        partner_name: partnerName,
         last_message: row.content,
         created_at: row.created_at,
       });
@@ -158,3 +182,4 @@ export default async function DashboardMessagesPage() {
     </div>
   );
 }
+
