@@ -5,6 +5,21 @@ import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
 const eur = (cents: number) => `${(cents / 100).toFixed(2)} €`;
 
+const statusLabel = (status: string) => {
+  switch (status) {
+    case "paid":
+      return "Payé";
+    case "pending":
+      return "En attente";
+    case "failed":
+      return "Échoué";
+    case "refunded":
+      return "Remboursé";
+    default:
+      return status;
+  }
+};
+
 type OrderRow = {
   id: string;
   created_at: string;
@@ -68,7 +83,6 @@ export default async function SalesPage() {
   const { data: ordersRaw, error: ordersErr } = await admin
     .from("orders")
     .select("id, created_at, amount_cents, status, course_id")
-    .eq("status", "paid")
     .in("course_id", courseIds)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -85,13 +99,17 @@ export default async function SalesPage() {
   }
 
   const orders = (ordersRaw ?? []) as OrderRow[];
+  const paidOrders = orders.filter((o) => o.status === "paid");
 
-  const totalSales = orders.length;
-  const totalRevenue = orders.reduce((s, o) => s + (o.amount_cents ?? 0), 0);
+  const totalSales = paidOrders.length;
+  const totalRevenue = paidOrders.reduce(
+    (s, o) => s + (o.amount_cents ?? 0),
+    0,
+  );
 
   const now = Date.now();
   const days30 = 30 * 24 * 60 * 60 * 1000;
-  const revenue30d = orders
+  const revenue30d = paidOrders
     .filter((o) => now - new Date(o.created_at).getTime() <= days30)
     .reduce((s, o) => s + (o.amount_cents ?? 0), 0);
 
@@ -145,7 +163,7 @@ export default async function SalesPage() {
 
                 <div className="text-right whitespace-nowrap">
                   <p className="font-semibold">{eur(o.amount_cents ?? 0)}</p>
-                  <p className="text-xs text-white/50">{o.status}</p>
+                  <p className="text-xs text-white/50">{statusLabel(o.status)}</p>
                 </div>
               </div>
             ))}
