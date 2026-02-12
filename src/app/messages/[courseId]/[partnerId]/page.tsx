@@ -1,4 +1,3 @@
-import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { MessageComposer } from "../../components/MessageComposer";
 import { ConversationMessages } from "../../components/ConversationMessages";
@@ -12,7 +11,11 @@ export default async function ConversationPage({
   const { data: sessionData } = await supabase.auth.getSession();
   const session = sessionData.session;
 
-  if (!session) redirect("/auth/login");
+  if (!session) {
+    // On laisse le layout global gérer la redirection si besoin,
+    // ici on renvoie simplement rien pour éviter une erreur.
+    return null;
+  }
 
   const userId = session.user.id;
 
@@ -24,32 +27,69 @@ export default async function ConversationPage({
     .maybeSingle();
 
   const courseTitle = course?.title ?? "Conversation";
+  const sellerId = course?.author_id ?? params.partnerId;
+
+  // Déterminer les rôles dans la conversation
+  const isSeller = userId === sellerId;
+  const buyerId = isSeller ? params.partnerId : userId;
+
+  /* 🔎 Charger / créer la conversation pour (course, buyer, seller) */
+  const { data: existingConversation, error: convErr } = await supabase
+    .from("conversations")
+    .select("id, buyer_id, seller_id")
+    .eq("course_id", params.courseId)
+    .eq("buyer_id", buyerId)
+    .eq("seller_id", sellerId)
+    .maybeSingle();
+
+  if (convErr) {
+    throw new Error(convErr.message);
+  }
+
+  let conversationId = existingConversation?.id as string | undefined;
+
+  if (!conversationId) {
+    const { data: newConversation, error: createConvErr } = await supabase
+      .from("conversations")
+      .insert({
+        course_id: params.courseId,
+        buyer_id: buyerId,
+        seller_id: sellerId,
+      })
+      .select("id, buyer_id, seller_id")
+      .single();
+
+    if (createConvErr || !newConversation) {
+      throw new Error(
+        createConvErr?.message || "Impossible de créer la conversation",
+      );
+    }
+
+    conversationId = newConversation.id;
+  }
 
   /* 🔎 Nom du partenaire */
+  const partnerId = isSeller ? buyerId : sellerId;
+
   const { data: partner } = await supabase
     .from("profiles")
     .select("full_name")
-    .eq("id", params.partnerId)
+    .eq("id", partnerId)
     .maybeSingle();
 
   /* 💬 Récupération DES messages de la conversation */
   const { data: messages } = await supabase
     .from("messages")
-    .select("id, content, created_at, sender_id, receiver_id")
-    .eq("course_id", params.courseId)
-    .or(
-      `and(sender_id.eq.${userId},receiver_id.eq.${params.partnerId}),
-       and(sender_id.eq.${params.partnerId},receiver_id.eq.${userId})`
-    )
+    .select("id, content, created_at, sender_id, conversation_id")
+    .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
   /* 👁️ Marquer comme lus les messages reçus */
   await supabase
     .from("messages")
     .update({ is_read: true })
-    .eq("course_id", params.courseId)
-    .eq("receiver_id", userId)
-    .eq("sender_id", params.partnerId);
+    .eq("conversation_id", conversationId)
+    .neq("sender_id", userId);
 
   return (
     <div className="space-y-6">
@@ -67,13 +107,11 @@ export default async function ConversationPage({
         <ConversationMessages
           initialMessages={messages ?? []}
           currentUserId={userId}
-          courseId={params.courseId}
-          partnerId={params.partnerId}
+          conversationId={conversationId}
         />
 
         <MessageComposer
-          courseId={params.courseId}
-          receiverId={params.partnerId}
+          conversationId={conversationId}
           placeholder="Écrire un message…"
         />
       </div>

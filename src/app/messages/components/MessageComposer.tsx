@@ -4,14 +4,12 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 interface MessageComposerProps {
-  courseId: string;
-  receiverId: string;
+  conversationId: string;
   placeholder?: string;
 }
 
 export function MessageComposer({
-  courseId,
-  receiverId,
+  conversationId,
   placeholder,
 }: MessageComposerProps) {
   const [content, setContent] = useState("");
@@ -30,7 +28,7 @@ export function MessageComposer({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ courseId, receiverId, content }),
+        body: JSON.stringify({ conversationId, content }),
       });
 
       const payload = await response.json();

@@ -8,21 +8,19 @@ type Message = {
   content: string;
   created_at: string;
   sender_id: string;
-  receiver_id: string;
+  conversation_id: string;
 };
 
 type ConversationMessagesProps = {
   initialMessages: Message[];
   currentUserId: string;
-  courseId: string;
-  partnerId: string;
+  conversationId: string;
 };
 
 export function ConversationMessages({
   initialMessages,
   currentUserId,
-  courseId,
-  partnerId,
+  conversationId,
 }: ConversationMessagesProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages ?? []);
   const supabaseRef =
@@ -41,25 +39,17 @@ export function ConversationMessages({
     const supabase = supabaseRef.current;
 
     const channel = supabase
-      .channel(`messages-${courseId}-${currentUserId}-${partnerId}`)
+      .channel(`messages-${conversationId}-${currentUserId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `course_id=eq.${courseId}`,
+          filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
           const newMessage = payload.new as Message;
-
-          const isInConversation =
-            (newMessage.sender_id === currentUserId &&
-              newMessage.receiver_id === partnerId) ||
-            (newMessage.sender_id === partnerId &&
-              newMessage.receiver_id === currentUserId);
-
-          if (!isInConversation) return;
 
           setMessages((prev) => {
             // éviter les doublons si on reçoit plusieurs fois le même event

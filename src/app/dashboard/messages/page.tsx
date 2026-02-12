@@ -23,27 +23,50 @@ export default async function DashboardMessagesPage() {
 
   const userId = session.user.id;
 
-  // 1) Récupérer les cours dont l'utilisateur est l'auteur
-  const { data: myCourses, error: coursesErr } = await supabase
-    .from("courses")
-    .select("id, title, author_id")
-    .eq("author_id", userId);
+  // 1) Récupérer les conversations où je suis le vendeur (seller)
+  const { data: convRows, error: convErr } = await supabase
+    .from("conversations")
+    .select("id, course_id, buyer_id, seller_id")
+    .eq("seller_id", userId)
+    .order("created_at", { ascending: false });
 
-  if (coursesErr) {
+  if (convErr) {
     return (
       <div className="card">
-        <p className="font-semibold">Erreur chargement des cours</p>
+        <p className="font-semibold">Erreur chargement des messages</p>
         <pre className="text-xs whitespace-pre-wrap mt-3">
-          {JSON.stringify(coursesErr, null, 2)}
+          {JSON.stringify(convErr, null, 2)}
         </pre>
       </div>
     );
   }
 
-  const courseIds = (myCourses ?? []).map((c) => c.id);
-  const titleById = new Map((myCourses ?? []).map((c) => [c.id, c.title]));
+  const convRowsSafe = convRows ?? [];
 
-  if (courseIds.length === 0) {
+  // 1b) Récupérer les cours concernés
+  const courseIdSet = new Set<string>();
+  const partnerIdSet = new Set<string>();
+
+  convRowsSafe.forEach((row) => {
+    courseIdSet.add(row.course_id);
+    partnerIdSet.add(row.buyer_id); // côté vendeur, partner = buyer
+  });
+
+  let titleById = new Map<string, string>();
+  if (courseIdSet.size > 0) {
+    const { data: myCourses } = await supabase
+      .from("courses")
+      .select("id, title")
+      .in("id", Array.from(courseIdSet));
+
+    if (myCourses) {
+      titleById = new Map(
+        myCourses.map((c: any) => [c.id as string, (c.title as string) ?? ""]),
+      );
+    }
+  }
+
+  if (courseIdSet.size === 0) {
     return (
       <div className="card">
         <p className="text-sm text-white/60">Messagerie</p>
@@ -56,47 +79,16 @@ export default async function DashboardMessagesPage() {
     );
   }
 
-  // 2) Récupérer les messages liés à ces cours
-  const { data: rows, error: messagesErr } = await supabase
-    .from("messages")
-    .select("id, content, created_at, course_id, sender_id, receiver_id")
-    .in("course_id", courseIds)
-    .order("created_at", { ascending: false });
-
-  if (messagesErr) {
-    return (
-      <div className="card">
-        <p className="font-semibold">Erreur chargement des messages</p>
-        <pre className="text-xs whitespace-pre-wrap mt-3">
-          {JSON.stringify(messagesErr, null, 2)}
-        </pre>
-      </div>
-    );
-  }
-
-  const messages = rows ?? [];
-
-  // 2b) Récupérer les noms des partenaires
-  const partnerIdSet = new Set<string>();
-
-  messages.forEach((row) => {
-    const isSenderMe = row.sender_id === userId;
-    const isReceiverMe = row.receiver_id === userId;
-    if (!isSenderMe && !isReceiverMe) return;
-
-    const partnerId = isSenderMe ? row.receiver_id : row.sender_id;
-    if (partnerId) {
-      partnerIdSet.add(partnerId);
-    }
-  });
+  // 2b) Récupérer les noms des partenaires (buyers)
+  const partnerIdArray = Array.from(partnerIdSet);
 
   let nameById = new Map<string, string>();
 
-  if (partnerIdSet.size > 0) {
+  if (partnerIdArray.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, full_name")
-      .in("id", Array.from(partnerIdSet));
+      .in("id", partnerIdArray);
 
     if (profiles) {
       nameById = new Map(
@@ -108,32 +100,54 @@ export default async function DashboardMessagesPage() {
     }
   }
 
-  // 3) Construire les conversations (1 par cours + partenaire)
+  // 3) Récupérer le dernier message pour chaque conversation
+  const conversationIds = convRowsSafe.map((c) => c.id);
+  let lastMessageByConversation = new Map<
+    string,
+    { content: string; created_at: string }
+  >();
+
+  if (conversationIds.length > 0) {
+    const { data: lastMessages } = await supabase
+      .from("messages")
+      .select("id, content, created_at, conversation_id")
+      .in("conversation_id", conversationIds)
+      .order("created_at", { ascending: false });
+
+    (lastMessages ?? []).forEach((m: any) => {
+      if (!lastMessageByConversation.has(m.conversation_id)) {
+        lastMessageByConversation.set(m.conversation_id, {
+          content: m.content as string,
+          created_at: m.created_at as string,
+        });
+      }
+    });
+  }
+
+  // 4) Construire les conversations (1 par cours + partenaire)
   const conversations = new Map<string, ConversationPreview>();
 
-  messages.forEach((row: any) => {
-    // Dans le contexte vendeur, partner = l'autre personne que moi
-    const isSenderMe = row.sender_id === userId;
-    const isReceiverMe = row.receiver_id === userId;
-
-    // Par sécurité, ignorer les messages où je ne suis ni sender ni receiver
-    if (!isSenderMe && !isReceiverMe) return;
-
-    const partnerId = isSenderMe ? row.receiver_id : row.sender_id;
+  convRowsSafe.forEach((row: any) => {
+    const partnerId = row.buyer_id as string;
     const partnerName = nameById.get(partnerId) || "Contact";
 
     const courseTitle = titleById.get(row.course_id) ?? "Formation";
     const key = `${row.course_id}-${partnerId}`;
 
     if (!conversations.has(key)) {
+      const last = lastMessageByConversation.get(row.id) ?? {
+        content: "",
+        created_at: row.created_at as string,
+      };
+
       conversations.set(key, {
         id: row.id,
         course_id: row.course_id,
         course_title: courseTitle,
         partner_id: partnerId,
         partner_name: partnerName,
-        last_message: row.content,
-        created_at: row.created_at,
+        last_message: last.content,
+        created_at: last.created_at,
       });
     }
   });

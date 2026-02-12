@@ -22,42 +22,39 @@ export default async function MessagesPage() {
 
   const userId = session.user.id;
 
-  // 1) Récupérer tous les messages où je suis impliqué
-  const { data: rows, error: messagesErr } = await supabase
-    .from("messages")
-    .select("id, content, created_at, course_id, sender_id, receiver_id")
-    .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+  // 1) Récupérer toutes les conversations où je suis impliqué (buyer ou seller)
+  const { data: conversationsRows, error: convErr } = await supabase
+    .from("conversations")
+    .select("id, course_id, buyer_id, seller_id")
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order("created_at", { ascending: false });
 
-  if (messagesErr) {
+  if (convErr) {
     return (
       <div className="card">
         <p className="font-semibold">Erreur chargement des conversations</p>
         <pre className="text-xs whitespace-pre-wrap mt-3">
-          {JSON.stringify(messagesErr, null, 2)}
+          {JSON.stringify(convErr, null, 2)}
         </pre>
       </div>
     );
   }
 
-  const messages = rows ?? [];
+  const conversationsRowsSafe = conversationsRows ?? [];
 
   // 2) Récupérer les titres de formations et les noms des partenaires
   const courseIdSet = new Set<string>();
   const partnerIdSet = new Set<string>();
 
-  messages.forEach((row) => {
+  conversationsRowsSafe.forEach((row) => {
     courseIdSet.add(row.course_id);
 
-    const isSenderMe = row.sender_id === userId;
-    const isReceiverMe = row.receiver_id === userId;
+    const isBuyerMe = row.buyer_id === userId;
+    const isSellerMe = row.seller_id === userId;
+    if (!isBuyerMe && !isSellerMe) return;
 
-    if (!isSenderMe && !isReceiverMe) return;
-
-    const partnerId = isSenderMe ? row.receiver_id : row.sender_id;
-    if (partnerId) {
-      partnerIdSet.add(partnerId);
-    }
+    const partnerId = isBuyerMe ? row.seller_id : row.buyer_id;
+    if (partnerId) partnerIdSet.add(partnerId);
   });
 
   let courseTitleById = new Map<string, string>();
@@ -92,30 +89,57 @@ export default async function MessagesPage() {
     }
   }
 
-  // 3) Construire les conversations (1 par cours + partenaire)
+  // 3) Récupérer le dernier message par conversation
+  const conversationIds = conversationsRowsSafe.map((row) => row.id);
+
+  let lastMessageByConversation = new Map<string, { content: string; created_at: string }>();
+
+  if (conversationIds.length > 0) {
+    const { data: lastMessages } = await supabase
+      .from("messages")
+      .select("id, content, created_at, conversation_id")
+      .in("conversation_id", conversationIds)
+      .order("created_at", { ascending: false });
+
+    (lastMessages ?? []).forEach((m: any) => {
+      if (!lastMessageByConversation.has(m.conversation_id)) {
+        lastMessageByConversation.set(m.conversation_id, {
+          content: m.content as string,
+          created_at: m.created_at as string,
+        });
+      }
+    });
+  }
+
+  // 4) Construire les conversations (1 par cours + partenaire)
   const conversations = new Map<string, ConversationPreview>();
 
-  messages.forEach((row: any) => {
-    const isSenderMe = row.sender_id === userId;
-    const isReceiverMe = row.receiver_id === userId;
+  conversationsRowsSafe.forEach((row: any) => {
+    const isBuyerMe = row.buyer_id === userId;
+    const isSellerMe = row.seller_id === userId;
 
-    if (!isSenderMe && !isReceiverMe) return;
+    if (!isBuyerMe && !isSellerMe) return;
 
-    const partnerId = isSenderMe ? row.receiver_id : row.sender_id;
+    const partnerId = isBuyerMe ? row.seller_id : row.buyer_id;
     const partnerName = nameById.get(partnerId) || "Contact";
 
     const courseTitle = courseTitleById.get(row.course_id) ?? "Formation";
     const key = `${row.course_id}-${partnerId}`;
 
     if (!conversations.has(key)) {
+      const last = lastMessageByConversation.get(row.id) ?? {
+        content: "",
+        created_at: row.created_at as string,
+      };
+
       conversations.set(key, {
         id: row.id,
         course_id: row.course_id,
         course_title: courseTitle,
         partner_id: partnerId,
         partner_name: partnerName,
-        last_message: row.content,
-        created_at: row.created_at,
+        last_message: last.content,
+        created_at: last.created_at,
       });
     }
   });
