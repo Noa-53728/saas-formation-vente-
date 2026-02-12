@@ -46,9 +46,11 @@ export default async function ConversationPage({
     throw new Error(convErr.message);
   }
 
-  let conversationId = existingConversation?.id as string | undefined;
+  let conversationId: string;
 
-  if (!conversationId) {
+  if (existingConversation?.id) {
+    conversationId = existingConversation.id;
+  } else {
     const { data: newConversation, error: createConvErr } = await supabase
       .from("conversations")
       .insert({
