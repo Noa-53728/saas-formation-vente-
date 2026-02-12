@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { MessageComposer } from "../../components/MessageComposer";
+import { ConversationMessages } from "../../components/ConversationMessages";
 
 export default async function ConversationPage({
   params
@@ -71,37 +72,12 @@ export default async function ConversationPage({
       </div>
 
       <div className="card space-y-4">
-        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-          {!messages || messages.length === 0 ? (
-            <p className="text-sm text-white/60">
-              Aucun message pour l&apos;instant.
-            </p>
-          ) : (
-            messages.map((message) => {
-              const isMe = message.sender_id === userId;
-
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg border px-3 py-2 text-sm shadow ${
-                      isMe
-                        ? "bg-accent text-white border-accent/80"
-                        : "bg-white/5 border-white/10 text-white"
-                    }`}
-                  >
-                    <p className="whitespace-pre-line">{message.content}</p>
-                    <p className="mt-1 text-[11px] opacity-70">
-                      {new Date(message.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+        <ConversationMessages
+          initialMessages={messages ?? []}
+          currentUserId={userId}
+          courseId={params.courseId}
+          partnerId={params.partnerId}
+        />
 
         <MessageComposer
           courseId={params.courseId}
