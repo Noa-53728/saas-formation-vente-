@@ -68,7 +68,7 @@ export function ConversationMessages({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [courseId, currentUserId, partnerId]);
+  }, [conversationId, currentUserId]);
 
   return (
     <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
