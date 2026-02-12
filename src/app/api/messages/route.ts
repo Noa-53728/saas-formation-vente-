@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   // Vérifier que l'utilisateur est bien participant à la conversation
   const { data: conversation, error: convErr } = await supabase
     .from("conversations")
-    .select("buyer_id, seller_id")
+    .select("buyer_id, seller_id, course_id")
     .eq("id", conversationId)
     .maybeSingle();
 
@@ -53,12 +53,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { error } = await supabase.from("messages").insert({
+  const insertPayload: {
+    conversation_id: string;
+    sender_id: string;
+    content: string;
+    is_read: boolean;
+    course_id?: string;
+  } = {
     conversation_id: conversationId,
     sender_id: userId,
     content,
     is_read: false,
-  });
+  };
+
+  // Si la table messages a encore une colonne course_id (FK vers courses), la remplir
+  if (conversation.course_id) {
+    insertPayload.course_id = conversation.course_id;
+  }
+
+  const { error } = await supabase.from("messages").insert(insertPayload);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
