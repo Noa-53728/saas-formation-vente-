@@ -19,7 +19,7 @@ export default async function CourseDetailPage({
 
   const userId = user?.id ?? null;
 
-  /* 🔎 COURSE */
+  /* 🔎 COURSE (sans jointure implicite Supabase) */
   const { data: course, error } = await supabase
     .from("courses")
     .select(
@@ -31,9 +31,8 @@ export default async function CourseDetailPage({
       video_url,
       pdf_url,
       thumbnail_url,
-      author_id,
-      author:profiles(full_name)
-    `
+      author_id
+    `,
     )
     .eq("id", params.id)
     .single();
@@ -47,7 +46,9 @@ export default async function CourseDetailPage({
     // Problème RLS / permissions / autre erreur Supabase → afficher l'erreur
     return (
       <div className="card space-y-3">
-        <h1 className="text-xl font-semibold">Erreur de chargement de la formation</h1>
+        <h1 className="text-xl font-semibold">
+          Erreur de chargement de la formation
+        </h1>
         <p className="text-sm text-white/70">
           Impossible d&apos;afficher cette formation pour le moment.
         </p>
@@ -57,6 +58,13 @@ export default async function CourseDetailPage({
       </div>
     );
   }
+
+  /* 🔎 Auteur (requête séparée, pas besoin de relation déclarée) */
+  const { data: author } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", course.author_id)
+    .maybeSingle();
 
   /* 🔐 ACCESS */
   const isOwner = userId === course.author_id;
@@ -141,9 +149,7 @@ export default async function CourseDetailPage({
               {formatPrice(course.price_cents)}
             </span>
 
-            {Array.isArray(course.author) && course.author.length > 0 && (
-              <span>Par {course.author[0].full_name}</span>
-            )}
+            {author?.full_name && <span>Par {author.full_name}</span>}
 
             <span className="text-white/40">ID : {course.id}</span>
           </div>
