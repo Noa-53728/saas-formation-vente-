@@ -16,21 +16,21 @@ export default async function ConversationPage({
 
   const userId = session.user.id;
 
-  /* 🔎 Charger le cours */
+  /* 🔎 Charger le cours (optionnel : peut être masqué par RLS ou supprimé) */
   const { data: course } = await supabase
     .from("courses")
     .select("id, title, author_id")
     .eq("id", params.courseId)
     .maybeSingle();
 
-  if (!course) notFound();
+  const courseTitle = course?.title ?? "Conversation";
+  const courseAuthorId = course?.author_id ?? null;
 
-  /* 🔐 Sécurité : seulement auteur ↔ partenaire */
-  if (
-    userId !== course.author_id &&
-    userId !== params.partnerId
-  ) {
-    redirect("/messages");
+  /* 🔐 Sécurité : seulement auteur ↔ partenaire (si le cours est visible) */
+  if (courseAuthorId) {
+    if (userId !== courseAuthorId && userId !== params.partnerId) {
+      redirect("/messages");
+    }
   }
 
   /* 🔎 Nom du partenaire */
@@ -65,7 +65,7 @@ export default async function ConversationPage({
         <p className="text-xs uppercase tracking-wide text-accent font-semibold">
           Messagerie
         </p>
-        <h1 className="text-2xl font-semibold">{course.title}</h1>
+        <h1 className="text-2xl font-semibold">{courseTitle}</h1>
         <p className="text-sm text-white/60">
           Avec {partner?.full_name ?? "Contact"}
         </p>
