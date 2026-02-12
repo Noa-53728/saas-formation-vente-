@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient();
@@ -42,6 +43,10 @@ export async function POST(req: NextRequest) {
     sender_id: userId,
     receiver_id: receiverId,
     course_id: courseId,
+    // conversation_id n'est pas utilisé dans le code,
+    // mais la colonne est NOT NULL en base → on la remplit
+    // avec un identifiant stable par message.
+    conversation_id: crypto.randomUUID(),
     content
   });
 
