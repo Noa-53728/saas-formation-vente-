@@ -24,14 +24,6 @@ export default async function ConversationPage({
     .maybeSingle();
 
   const courseTitle = course?.title ?? "Conversation";
-  const courseAuthorId = course?.author_id ?? null;
-
-  /* 🔐 Sécurité : seulement auteur ↔ partenaire (si le cours est visible) */
-  if (courseAuthorId) {
-    if (userId !== courseAuthorId && userId !== params.partnerId) {
-      redirect("/messages");
-    }
-  }
 
   /* 🔎 Nom du partenaire */
   const { data: partner } = await supabase
