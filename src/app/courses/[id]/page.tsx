@@ -38,7 +38,25 @@ export default async function CourseDetailPage({
     .eq("id", params.id)
     .single();
 
-  if (error || !course) notFound();
+  if (!course && !error) {
+    // L'ID ne correspond à aucune formation existante → vraie 404
+    notFound();
+  }
+
+  if (error) {
+    // Problème RLS / permissions / autre erreur Supabase → afficher l'erreur
+    return (
+      <div className="card space-y-3">
+        <h1 className="text-xl font-semibold">Erreur de chargement de la formation</h1>
+        <p className="text-sm text-white/70">
+          Impossible d&apos;afficher cette formation pour le moment.
+        </p>
+        <pre className="mt-3 text-xs whitespace-pre-wrap bg-black/30 rounded p-3 border border-red-500/40 text-red-200">
+          {error.message}
+        </pre>
+      </div>
+    );
+  }
 
   /* 🔐 ACCESS */
   const isOwner = userId === course.author_id;
