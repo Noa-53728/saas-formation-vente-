@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { MessageComposer } from "../../components/MessageComposer";
 import { ConversationMessages } from "../../components/ConversationMessages";
@@ -12,14 +13,12 @@ export default async function ConversationPage({
   const session = sessionData.session;
 
   if (!session) {
-    // On laisse le layout global gérer la redirection si besoin,
-    // ici on renvoie simplement rien pour éviter une erreur.
-    return null;
+    redirect("/auth/login");
   }
 
   const userId = session.user.id;
 
-  /* 🔎 Charger le cours (optionnel : peut être masqué par RLS ou supprimé) */
+  /* 🔎 Charger le cours */
   const { data: course } = await supabase
     .from("courses")
     .select("id, title, author_id")
@@ -29,11 +28,10 @@ export default async function ConversationPage({
   const courseTitle = course?.title ?? "Conversation";
   const sellerId = course?.author_id ?? params.partnerId;
 
-  // Déterminer les rôles dans la conversation
   const isSeller = userId === sellerId;
   const buyerId = isSeller ? params.partnerId : userId;
 
-  /* 🔎 Charger / créer la conversation pour (course, buyer, seller) */
+  /* 🔎 Charger ou créer la conversation */
   const { data: existingConversation, error: convErr } = await supabase
     .from("conversations")
     .select("id, buyer_id, seller_id")
@@ -43,7 +41,22 @@ export default async function ConversationPage({
     .maybeSingle();
 
   if (convErr) {
-    throw new Error(convErr.message);
+    return (
+      <div className="card space-y-3">
+        <h1 className="text-xl font-semibold">Erreur de chargement</h1>
+        <p className="text-sm text-white/70">
+          Impossible d&apos;ouvrir la conversation. Vérifiez que la table
+          &quot;conversations&quot; existe dans Supabase avec les colonnes :
+          id, course_id, buyer_id, seller_id.
+        </p>
+        <pre className="text-xs bg-black/30 rounded p-3 border border-red-500/40 text-red-200 overflow-auto">
+          {convErr.message}
+        </pre>
+        <a href="/messages" className="text-sm text-accent hover:underline">
+          ← Retour aux conversations
+        </a>
+      </div>
+    );
   }
 
   let conversationId: string;
@@ -62,8 +75,21 @@ export default async function ConversationPage({
       .single();
 
     if (createConvErr || !newConversation) {
-      throw new Error(
-        createConvErr?.message || "Impossible de créer la conversation",
+      return (
+        <div className="card space-y-3">
+          <h1 className="text-xl font-semibold">Erreur de création</h1>
+          <p className="text-sm text-white/70">
+            Impossible de créer la conversation. Vérifiez les politiques RLS sur
+            la table &quot;conversations&quot; (insert autorisé pour buyer ou
+            seller).
+          </p>
+          <pre className="text-xs bg-black/30 rounded p-3 border border-red-500/40 text-red-200 overflow-auto">
+            {(createConvErr?.message ?? "Erreur inconnue")}
+          </pre>
+          <a href="/messages" className="text-sm text-accent hover:underline">
+            ← Retour aux conversations
+          </a>
+        </div>
       );
     }
 
