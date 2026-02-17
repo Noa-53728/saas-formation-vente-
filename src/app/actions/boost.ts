@@ -13,7 +13,10 @@ function getBaseUrl() {
   const h = headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? "https";
-  if (!host) return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  if (!host) {
+    const url = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    return url.replace(/\/$/, "");
+  }
   return `${proto}://${host}`;
 }
 

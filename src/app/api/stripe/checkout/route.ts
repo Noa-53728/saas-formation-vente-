@@ -49,8 +49,8 @@ export async function POST(req: Request) {
       course_id: course.id,
       user_id: session.user.id,
     },
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
+    success_url: `${(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")}/success`,
+    cancel_url: `${(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")}/cancel`,
   });
 
   return NextResponse.json({ url: checkoutSession.url });

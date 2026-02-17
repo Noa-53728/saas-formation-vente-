@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   }
 
   // 4) Créer session Checkout subscription
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: stripeCustomerId,
