@@ -45,6 +45,7 @@ export async function POST(req: Request) {
       },
     ],
     metadata: {
+      type: "purchase",
       course_id: course.id,
       user_id: session.user.id,
     },

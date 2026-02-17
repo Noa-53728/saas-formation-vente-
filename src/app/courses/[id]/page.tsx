@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Stripe from "stripe";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const formatPrice = (priceCents: number) =>
@@ -81,11 +82,14 @@ export default async function CourseDetailPage({
     hasAccess = Boolean(purchase);
   }
 
-  /* 💳 STRIPE CHECKOUT (SERVER ACTION) */
+  /* 💳 STRIPE CHECKOUT (SERVER ACTION) — création session Stripe côté serveur pour garder l’auth */
   const createCheckoutAction = async (formData: FormData) => {
     "use server";
 
     const courseId = formData.get("courseId") as string;
+    if (!courseId) {
+      throw new Error("Identifiant de formation manquant");
+    }
 
     const supabase = createSupabaseServerClient();
     const {
@@ -94,19 +98,49 @@ export default async function CourseDetailPage({
 
     if (!user) redirect("/auth/login");
 
+    const { data: course } = await supabase
+      .from("courses")
+      .select("id, title, price_cents")
+      .eq("id", courseId)
+      .maybeSingle();
+
+    if (!course) {
+      throw new Error("Formation introuvable");
+    }
+
+    const secret = process.env.STRIPE_SECRET_KEY;
+    if (!secret) {
+      throw new Error("Stripe n'est pas configuré (STRIPE_SECRET_KEY manquant)");
+    }
+
+    const stripe = new Stripe(secret, { apiVersion: "2024-06-20" });
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    const res = await fetch(`${baseUrl}/api/stripe/checkout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId }),
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: user.email ?? undefined,
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: { name: course.title },
+            unit_amount: course.price_cents,
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        type: "purchase",
+        course_id: course.id,
+        user_id: user.id,
+      },
+      success_url: `${baseUrl}/success`,
+      cancel_url: `${baseUrl}/cancel`,
     });
 
-    const data = await res.json();
-
-    if (data?.url) {
-      redirect(data.url);
+    if (checkoutSession.url) {
+      redirect(checkoutSession.url);
     }
 
     throw new Error("Impossible de créer la session Stripe");
