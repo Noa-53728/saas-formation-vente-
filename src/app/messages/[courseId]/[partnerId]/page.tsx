@@ -106,14 +106,28 @@ export default async function ConversationPage({
     .maybeSingle();
 
   /* 💬 Récupération DES messages de la conversation */
-  const { data: messages } = await supabase
+  const { data: messages, error: messagesErr } = await supabase
     .from("messages")
     .select("id, content, created_at, sender_id, conversation_id")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
+  if (messagesErr) {
+    return (
+      <div className="card space-y-3">
+        <h1 className="text-xl font-semibold">Erreur chargement des messages</h1>
+        <pre className="text-xs bg-black/30 rounded p-3 border border-red-500/40 text-red-200 overflow-auto">
+          {messagesErr.message}
+        </pre>
+        <a href="/messages" className="text-sm text-accent hover:underline">
+          ← Retour aux conversations
+        </a>
+      </div>
+    );
+  }
+
   /* 👁️ Marquer comme lus les messages reçus */
-  await supabase
+  const { error: readErr } = await supabase
     .from("messages")
     .update({ is_read: true })
     .eq("conversation_id", conversationId)
@@ -132,6 +146,11 @@ export default async function ConversationPage({
       </div>
 
       <div className="card space-y-4">
+        {readErr ? (
+          <p className="text-xs text-red-300">
+            Impossible de marquer comme lus: {readErr.message}
+          </p>
+        ) : null}
         <ConversationMessages
           initialMessages={messages ?? []}
           currentUserId={userId}
