@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 
 interface MessageComposerProps {
   conversationId: string;
+  courseId: string;
   placeholder?: string;
 }
 
 export function MessageComposer({
   conversationId,
+  courseId,
   placeholder,
 }: MessageComposerProps) {
   const [content, setContent] = useState("");
@@ -28,7 +30,7 @@ export function MessageComposer({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ conversationId, content }),
+        body: JSON.stringify({ conversationId, courseId, content }),
       });
 
       const payload = await response.json();

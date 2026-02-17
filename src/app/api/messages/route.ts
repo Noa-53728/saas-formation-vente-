@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const conversationId = body?.conversationId as string;
+  const courseIdFromClient = body?.courseId as string | undefined;
   const content = (body?.content as string)?.trim();
 
   if (!conversationId || !content) {
@@ -66,9 +67,11 @@ export async function POST(req: NextRequest) {
     is_read: false,
   };
 
-  // Si la table messages a encore une colonne course_id (FK vers courses), la remplir
-  if (conversation.course_id) {
-    insertPayload.course_id = conversation.course_id;
+  // Remplir course_id pour la table messages (FK vers courses) : priorité à la conversation, sinon le courseId envoyé par le client (page = URL)
+  const courseId =
+    (conversation as { course_id?: string }).course_id ?? courseIdFromClient;
+  if (courseId) {
+    insertPayload.course_id = courseId;
   }
 
   const { error } = await supabase.from("messages").insert(insertPayload);

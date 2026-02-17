@@ -140,6 +140,7 @@ export default async function ConversationPage({
 
         <MessageComposer
           conversationId={conversationId}
+          courseId={params.courseId}
           placeholder="Écrire un message…"
         />
       </div>
