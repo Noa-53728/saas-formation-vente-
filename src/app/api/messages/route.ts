@@ -74,10 +74,61 @@ export async function POST(req: NextRequest) {
     insertPayload.course_id = courseId;
   }
 
+  // Si course_id est présent, vérifier qu'il existe bien en base (sinon la FK cassera)
+  if (insertPayload.course_id) {
+    const { data: courseRow, error: courseErr } = await supabase
+      .from("courses")
+      .select("id")
+      .eq("id", insertPayload.course_id)
+      .maybeSingle();
+
+    if (courseErr) {
+      return NextResponse.json(
+        {
+          error: courseErr.message,
+          debug: {
+            conversationId,
+            courseIdFromClient: courseIdFromClient ?? null,
+            conversationCourseId: (conversation as any).course_id ?? null,
+            courseIdUsed: insertPayload.course_id,
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!courseRow) {
+      return NextResponse.json(
+        {
+          error:
+            "Formation introuvable pour le course_id utilisé (FK messages_course_id_fkey).",
+          debug: {
+            conversationId,
+            courseIdFromClient: courseIdFromClient ?? null,
+            conversationCourseId: (conversation as any).course_id ?? null,
+            courseIdUsed: insertPayload.course_id,
+          },
+        },
+        { status: 400 },
+      );
+    }
+  }
+
   const { error } = await supabase.from("messages").insert(insertPayload);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: error.message,
+        debug: {
+          conversationId,
+          courseIdFromClient: courseIdFromClient ?? null,
+          conversationCourseId: (conversation as any).course_id ?? null,
+          courseIdUsed: insertPayload.course_id ?? null,
+        },
+      },
+      { status: 400 },
+    );
   }
 
   return NextResponse.json({ ok: true });
