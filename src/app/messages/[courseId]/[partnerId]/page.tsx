@@ -96,14 +96,14 @@ export default async function ConversationPage({
     conversationId = newConversation.id;
   }
 
-  /* 🔎 Nom du partenaire */
-  const partnerId = isSeller ? buyerId : sellerId;
-
-  const { data: partner } = await supabase
+  /* 🔎 Nom du vendeur (auteur de la formation) pour l'en-tête */
+  const { data: sellerProfile } = await supabase
     .from("profiles")
     .select("full_name")
-    .eq("id", partnerId)
+    .eq("id", sellerId)
     .maybeSingle();
+
+  const sellerName = sellerProfile?.full_name?.trim() || "Vendeur";
 
   /* 💬 Récupération DES messages de la conversation */
   const { data: messages, error: messagesErr } = await supabase
@@ -141,7 +141,7 @@ export default async function ConversationPage({
         </p>
         <h1 className="text-2xl font-semibold">{courseTitle}</h1>
         <p className="text-sm text-white/60">
-          Avec {partner?.full_name ?? "Contact"}
+          Avec {sellerName}
         </p>
       </div>
 
