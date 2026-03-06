@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #1a182f;
+  --background: #373155;
   --foreground: #f8fafc;
 }
 
@@ -32,9 +32,6 @@ a {
 }
 
 .hero-cosmic {
-  background: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(99, 102, 241, 0.25), transparent),
-    radial-gradient(ellipse 80% 50% at 80% 50%, rgba(99, 102, 241, 0.12), transparent),
-    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(139, 92, 246, 0.1), transparent),
-    var(--background);
+  background: var(--background);
   min-height: 100%;
 }
