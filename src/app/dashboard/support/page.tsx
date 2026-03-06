@@ -64,7 +64,7 @@ export default function SupportPage() {
             href="mailto:support@formio.app"
             className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 font-semibold text-white transition hover:bg-white/10"
           >
-            support@formio.app
+            formio.forms@gmail.com
           </a>
         </div>
       </div>
