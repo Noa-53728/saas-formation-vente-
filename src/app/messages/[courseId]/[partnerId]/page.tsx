@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 import { MessageComposer } from "../../components/MessageComposer";
 import { ConversationMessages } from "../../components/ConversationMessages";
 
@@ -96,14 +97,15 @@ export default async function ConversationPage({
     conversationId = newConversation.id;
   }
 
-  /* 🔎 Nom du vendeur (auteur de la formation) pour l'en-tête */
-  const { data: sellerProfile } = await supabase
+  /* 🔎 Nom du vendeur (auteur de la formation) — admin pour contourner RLS si besoin */
+  const admin = createSupabaseAdminClient();
+  const { data: sellerProfile } = await admin
     .from("profiles")
     .select("full_name")
     .eq("id", sellerId)
     .maybeSingle();
 
-  const sellerName = sellerProfile?.full_name?.trim() || "Vendeur";
+  const sellerName = (sellerProfile?.full_name ?? "").trim() || "Vendeur";
 
   /* 💬 Récupération DES messages de la conversation */
   const { data: messages, error: messagesErr } = await supabase
