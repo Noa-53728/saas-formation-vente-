@@ -12,11 +12,20 @@ async function updateProfileAction(formData: FormData) {
   if (!user) redirect("/auth/login");
 
   const fullName = (formData.get("full_name") as string)?.trim() ?? "";
+  const avatarUrl = (formData.get("avatar_url") as string)?.trim() || null;
   const isSeller = formData.get("is_seller") === "on";
+
+  if (!fullName) {
+    redirect("/dashboard/settings?error=name");
+  }
 
   await supabase
     .from("profiles")
-    .update({ full_name: fullName || null, is_seller: isSeller })
+    .update({
+      full_name: fullName,
+      avatar_url: avatarUrl,
+      is_seller: isSeller,
+    })
     .eq("id", user.id);
 
   redirect("/dashboard/settings?updated=1");
@@ -25,7 +34,7 @@ async function updateProfileAction(formData: FormData) {
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ updated?: string }>;
+  searchParams: Promise<{ updated?: string; error?: string }>;
 }) {
   const supabase = createSupabaseServerClient();
 
@@ -37,7 +46,7 @@ export default async function SettingsPage({
 
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")
-    .select("full_name, is_seller")
+    .select("full_name, is_seller, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -54,6 +63,7 @@ export default async function SettingsPage({
 
   const params = await searchParams;
   const showSuccess = params.updated === "1";
+  const showNameError = params.error === "name";
 
   return (
     <div className="space-y-6">
@@ -74,22 +84,57 @@ export default async function SettingsPage({
           </p>
         )}
 
+        {showNameError && (
+          <p className="text-sm text-red-400 bg-red-400/10 border border-red-400/30 rounded-lg px-3 py-2">
+            Le nom d&apos;utilisateur est obligatoire.
+          </p>
+        )}
+
         <form action={updateProfileAction} className="space-y-4 max-w-md">
           <div>
             <label
               htmlFor="full_name"
               className="block text-sm font-medium text-white/80 mb-1"
             >
-              Nom affiché
+              Nom d&apos;utilisateur <span className="text-red-400">*</span>
             </label>
             <input
               id="full_name"
               name="full_name"
               type="text"
+              required
+              minLength={1}
               defaultValue={profile?.full_name ?? ""}
               className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-accent"
               placeholder="Votre nom ou pseudo"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="avatar_url"
+              className="block text-sm font-medium text-white/80 mb-1"
+            >
+              Photo de profil <span className="text-white/50">(optionnel)</span>
+            </label>
+            <input
+              id="avatar_url"
+              name="avatar_url"
+              type="url"
+              defaultValue={profile?.avatar_url ?? ""}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-accent"
+              placeholder="https://exemple.com/ma-photo.jpg"
+            />
+            {profile?.avatar_url && (
+              <p className="mt-2 text-xs text-white/50">
+                Photo actuelle :{" "}
+                <img
+                  src={profile.avatar_url}
+                  alt="Avatar"
+                  className="inline-block h-8 w-8 rounded-full object-cover align-middle"
+                />
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

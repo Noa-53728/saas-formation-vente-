@@ -18,7 +18,13 @@ export default function RegisterPage() {
     const form = new FormData(event.currentTarget);
     const email = form.get("email") as string;
     const password = form.get("password") as string;
-    const fullName = form.get("fullName") as string;
+    const fullName = (form.get("fullName") as string)?.trim() ?? "";
+
+    if (!fullName) {
+      setError("Le nom d'utilisateur est obligatoire.");
+      setLoading(false);
+      return;
+    }
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -52,15 +58,16 @@ export default function RegisterPage() {
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <label className="block text-sm text-white/80" htmlFor="fullName">
-            Nom complet
+            Nom d&apos;utilisateur <span className="text-red-400">*</span>
           </label>
           <input
             id="fullName"
             name="fullName"
             type="text"
             required
+            minLength={1}
             className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white focus:border-accent focus:outline-none"
-            placeholder="Camille Dupont"
+            placeholder="Votre nom ou pseudo"
           />
         </div>
         <div className="space-y-2">

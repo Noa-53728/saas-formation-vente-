@@ -20,11 +20,12 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name")
+    .select("full_name, avatar_url")
     .eq("id", userId)
     .maybeSingle();
 
   const name = profile?.full_name ?? "Créateur";
+  const avatarUrl = profile?.avatar_url ?? null;
 
   let unreadCount = 0;
   const { data: sellerConvs } = await supabase
@@ -48,6 +49,7 @@ export default async function DashboardLayout({
       <section className="min-w-0 flex-1">
         <DashboardTopBar
           userName={name}
+          userAvatarUrl={avatarUrl}
           notificationCount={unreadCount}
         />
         {children}
