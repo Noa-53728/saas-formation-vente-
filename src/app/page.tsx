@@ -16,7 +16,7 @@ export default function Home() {
           </p>
 
           <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-white">
-            Vendez et trouvez des formations vidéo + PDF en toute confiance.
+            Vendez et trouvez vos formations en ligne en toute simplicité.
           </h1>
 
           <p className="text-lg text-white/70 leading-relaxed">
