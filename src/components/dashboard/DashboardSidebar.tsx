@@ -10,7 +10,7 @@ const nav = [
   { href: "/dashboard/messages", label: "Messages", icon: "✉️", badge: true },
   { href: "/dashboard/billing", label: "Facturation", icon: "📄" },
   { href: "/dashboard/settings", label: "Paramètres", icon: "⚙️" },
-  { href: "#", label: "Support", icon: "❓" },
+  { href: "/dashboard/support", label: "Support", icon: "❓" },
 ];
 
 export default function DashboardSidebar({
