@@ -137,6 +137,17 @@ export default async function ConversationPage({
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <a
+          href="/messages"
+          className="flex items-center gap-2 rounded-lg border border-white/10 bg-card px-3 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Retour
+        </a>
+      </div>
       <div className="card space-y-1">
         <p className="text-xs uppercase tracking-wide text-accent font-semibold">
           Messagerie

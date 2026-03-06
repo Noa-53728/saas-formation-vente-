@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import AvatarUpload from "@/components/dashboard/AvatarUpload";
 
 async function updateProfileAction(formData: FormData) {
   "use server";
@@ -110,12 +111,16 @@ export default async function SettingsPage({
             />
           </div>
 
+          <AvatarUpload
+            userId={user.id}
+            currentAvatarUrl={profile?.avatar_url ?? null}
+          />
           <div>
             <label
               htmlFor="avatar_url"
-              className="block text-sm font-medium text-white/80 mb-1"
+              className="block text-sm font-medium text-white/80 mb-1 mt-4"
             >
-              Photo de profil <span className="text-white/50">(optionnel)</span>
+              Ou avec un lien <span className="text-white/50">(optionnel)</span>
             </label>
             <input
               id="avatar_url"
@@ -125,16 +130,6 @@ export default async function SettingsPage({
               className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-accent"
               placeholder="https://exemple.com/ma-photo.jpg"
             />
-            {profile?.avatar_url && (
-              <p className="mt-2 text-xs text-white/50">
-                Photo actuelle :{" "}
-                <img
-                  src={profile.avatar_url}
-                  alt="Avatar"
-                  className="inline-block h-8 w-8 rounded-full object-cover align-middle"
-                />
-              </p>
-            )}
           </div>
 
           <div className="flex items-center gap-3">
