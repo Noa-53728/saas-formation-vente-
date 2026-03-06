@@ -10,8 +10,15 @@ const config: Config = {
     extend: {
       colors: {
         primary: '#0F172A',
-        accent: '#6366F1'
-      }
+        accent: '#6D5CFF',
+        'accent-light': '#8B7CFF',
+        'accent-hover': '#5746FF',
+        card: '#1E293B',
+        success: '#22C55E',
+      },
+      backgroundImage: {
+        'chart-gradient': 'linear-gradient(135deg, #6D5CFF 0%, #3B82F6 100%)',
+      },
     }
   },
   plugins: []

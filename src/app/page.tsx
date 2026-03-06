@@ -11,7 +11,7 @@ export default function Home() {
     <div className="hero-cosmic">
       <div className="grid gap-10 lg:grid-cols-2 items-center">
         <div className="space-y-6">
-          <p className="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm text-white/70">
+          <p className="inline-flex items-center rounded-full bg-card border border-white/10 px-4 py-2 text-sm text-white/70">
             Marketplace de formations professionnelles
           </p>
 
@@ -57,37 +57,37 @@ export default function Home() {
         </div>
 
         {/* Mock dashboard preview */}
-        <div className="rounded-2xl bg-white/5 p-6 backdrop-blur lg:p-8">
+        <div className="rounded-2xl bg-card p-6 lg:p-8 border border-white/10">
           <p className="text-sm text-white/50 mb-4">Aperçu tableau de bord</p>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-white/5 p-4">
+            <div className="rounded-xl bg-primary p-4 border border-white/10">
               <p className="text-xs text-white/50">Ventes aujourd&apos;hui</p>
               <p className="text-xl font-bold text-white">25</p>
-              <p className="text-xs text-emerald-400">↑ +1.9%</p>
+              <p className="text-xs text-success">↑ +1.9%</p>
             </div>
-            <div className="rounded-xl bg-white/5 p-4">
+            <div className="rounded-xl bg-primary p-4 border border-white/10">
               <p className="text-xs text-white/50">Revenus aujourd&apos;hui</p>
               <p className="text-xl font-bold text-white">1 250 €</p>
-              <p className="text-xs text-emerald-400">↑ +1.9%</p>
+              <p className="text-xs text-success">↑ +1.9%</p>
             </div>
-            <div className="rounded-xl bg-white/5 p-4">
+            <div className="rounded-xl bg-primary p-4 border border-white/10">
               <p className="text-xs text-white/50">Ventes ce mois</p>
               <p className="text-xl font-bold text-white">347</p>
-              <p className="text-xs text-emerald-400">↑ +1.9%</p>
+              <p className="text-xs text-success">↑ +1.9%</p>
             </div>
-            <div className="rounded-xl bg-white/5 p-4">
+            <div className="rounded-xl bg-primary p-4 border border-white/10">
               <p className="text-xs text-white/50">Total des revenus</p>
               <p className="text-xl font-bold text-white">12 580 €</p>
-              <p className="text-xs text-emerald-400">↑ +1.9%</p>
+              <p className="text-xs text-success">↑ +1.9%</p>
             </div>
           </div>
-          <div className="mt-4 rounded-xl bg-white/5 p-4">
+          <div className="mt-4 rounded-xl bg-primary p-4 border border-white/10">
             <p className="text-xs text-white/50 mb-2">Statistiques de ventes · 7 jours</p>
             <div className="flex h-20 items-end gap-1">
               {[65, 45, 80, 55, 70, 60, 75].map((h, i) => (
                 <div
                   key={i}
-                  className="flex-1 rounded-t bg-accent/40"
+                  className="flex-1 rounded-t bg-gradient-to-t from-blue-500 to-accent"
                   style={{ height: `${h}%` }}
                 />
               ))}
@@ -95,7 +95,7 @@ export default function Home() {
           </div>
           <div className="mt-4 space-y-2">
             <p className="text-xs text-white/50">Mes formations</p>
-            <div className="flex gap-2 rounded-lg bg-white/5 p-2">
+            <div className="flex gap-2 rounded-lg bg-primary p-2 border border-white/10">
               <div className="h-10 w-14 rounded bg-white/10" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-white">Montage vidéo</p>

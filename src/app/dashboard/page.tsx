@@ -10,7 +10,7 @@ const MiniChart = () => (
     {[40, 65, 45, 80, 55, 70, 60].map((h, i) => (
       <div
         key={i}
-        className="w-1.5 rounded-t bg-accent/40"
+        className="w-1.5 rounded-t bg-gradient-to-t from-blue-500 to-accent"
         style={{ height: `${h}%` }}
       />
     ))}
@@ -116,34 +116,34 @@ export default async function DashboardPage() {
 
       {/* 4 stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+        <div className="rounded-2xl border border-white/10 bg-card p-5">
           <p className="text-sm text-white/60">Ventes aujourd&apos;hui</p>
           <p className="mt-1 text-2xl font-bold text-white">{salesToday}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-emerald-400">
+          <p className="mt-1 flex items-center gap-1 text-xs text-success">
             <span>↑</span> +1.9%
           </p>
           <MiniChart />
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+        <div className="rounded-2xl border border-white/10 bg-card p-5">
           <p className="text-sm text-white/60">Revenus aujourd&apos;hui</p>
           <p className="mt-1 text-2xl font-bold text-white">{eur(revenueToday)}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-emerald-400">
+          <p className="mt-1 flex items-center gap-1 text-xs text-success">
             <span>↑</span> +1.9%
           </p>
           <MiniChart />
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+        <div className="rounded-2xl border border-white/10 bg-card p-5">
           <p className="text-sm text-white/60">Ventes ce mois</p>
           <p className="mt-1 text-2xl font-bold text-white">{salesMonth}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-emerald-400">
+          <p className="mt-1 flex items-center gap-1 text-xs text-success">
             <span>↑</span> +1.9%
           </p>
           <MiniChart />
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+        <div className="rounded-2xl border border-white/10 bg-card p-5">
           <p className="text-sm text-white/60">Total des revenus</p>
           <p className="mt-1 text-2xl font-bold text-white">{eur(totalRevenue)}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-emerald-400">
+          <p className="mt-1 flex items-center gap-1 text-xs text-success">
             <span>↑</span> +1.9%
           </p>
           <MiniChart />
@@ -153,12 +153,12 @@ export default async function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: chart + mes formations */}
         <div className="space-y-6 lg:col-span-2">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+          <div className="rounded-2xl border border-white/10 bg-card p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">
                 Statistiques de ventes
               </h2>
-              <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">
+              <span className="rounded-lg border border-white/10 bg-card px-3 py-1 text-sm text-white/70">
                 7 jours
               </span>
             </div>
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
               {[65, 45, 80, 55, 70, 60, 75].map((h, i) => (
                 <div
                   key={i}
-                  className="flex-1 rounded-t bg-accent/30 transition hover:bg-accent/50"
+                  className="flex-1 rounded-t bg-gradient-to-t from-blue-500 to-accent transition opacity-90 hover:opacity-100"
                   style={{ height: `${h}%` }}
                 />
               ))}
@@ -177,7 +177,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+          <div className="rounded-2xl border border-white/10 bg-card p-6">
             <h2 className="text-lg font-semibold text-white">Mes formations</h2>
             <div className="mt-4 space-y-4">
               {displayCourses.length === 0 ? (
@@ -192,7 +192,7 @@ export default async function DashboardPage() {
                     <Link
                       key={course.id}
                       href={`/dashboard/courses/${course.id}/edit`}
-                      className="flex gap-4 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-accent/30"
+                      className="flex gap-4 rounded-xl border border-white/10 bg-card p-3 transition hover:border-accent/30"
                     >
                       <div className="h-14 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-white/10">
                         {course.thumbnail_url ? (
@@ -235,7 +235,7 @@ export default async function DashboardPage() {
 
         {/* Right: activités + aide */}
         <div className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+          <div className="rounded-2xl border border-white/10 bg-card p-6">
             <h2 className="text-lg font-semibold text-white">Activités récentes</h2>
             <div className="mt-4 space-y-3">
               {recentOrders.length === 0 ? (
@@ -246,7 +246,7 @@ export default async function DashboardPage() {
                     key={o.id}
                     className="flex items-start gap-3 rounded-lg p-2"
                   >
-                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent/30 text-sm font-semibold text-white">
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-white">
                       {String(nameById.get(o.user_id) ?? "?").charAt(0)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -270,7 +270,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-accent/20 to-accent/5 p-6 backdrop-blur">
+          <div className="rounded-2xl border border-white/10 bg-card p-6">
             <div className="flex flex-col items-center text-center">
               <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-accent/20 text-5xl">
                 💻

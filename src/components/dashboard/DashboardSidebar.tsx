@@ -22,7 +22,7 @@ export default function DashboardSidebar({
 
   return (
     <aside className="flex w-full flex-col md:w-64 md:flex-shrink-0">
-      <div className="sticky top-6 flex flex-col gap-6 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+      <div className="sticky top-6 flex flex-col gap-6 rounded-2xl border border-white/10 bg-primary p-4">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-lg font-bold text-white">
             F

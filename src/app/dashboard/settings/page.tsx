@@ -69,7 +69,7 @@ export default async function SettingsPage({
         <h2 className="text-xl font-semibold">Profil</h2>
 
         {showSuccess && (
-          <p className="text-sm text-green-400 bg-green-400/10 border border-green-400/30 rounded-lg px-3 py-2">
+          <p className="text-sm text-success bg-success/10 border border-success/30 rounded-lg px-3 py-2">
             Profil enregistré.
           </p>
         )}

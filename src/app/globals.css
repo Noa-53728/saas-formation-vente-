@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --background: #373155;
+  --background: #0F172A;
   --foreground: #f8fafc;
+  --card: #1E293B;
 }
 
 body {
@@ -20,7 +21,7 @@ a {
 }
 
 .button-primary {
-  @apply px-5 py-3 bg-accent text-white rounded-md font-semibold shadow transition hover:opacity-90;
+  @apply px-5 py-3 bg-accent text-white rounded-md font-semibold shadow transition hover:bg-accent-hover;
 }
 
 .button-secondary {
@@ -28,7 +29,8 @@ a {
 }
 
 .card {
-  @apply bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur;
+  @apply rounded-xl p-6 border border-white/10;
+  background-color: var(--card);
 }
 
 .hero-cosmic {

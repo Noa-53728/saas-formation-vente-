@@ -4,7 +4,7 @@ export default function SuccessPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6 text-center">
       <div className="card space-y-4">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/20 text-success">
           <svg
             className="h-8 w-8"
             fill="none"
