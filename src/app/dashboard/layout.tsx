@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import DashboardTopBar from "@/components/dashboard/DashboardTopBar";
 
 export default async function DashboardLayout({
   children,
@@ -25,41 +26,30 @@ export default async function DashboardLayout({
 
   const name = profile?.full_name ?? "Créateur";
 
+  let unreadCount = 0;
+  const { data: sellerConvs } = await supabase
+    .from("conversations")
+    .select("id")
+    .eq("seller_id", userId);
+  const convIds = (sellerConvs ?? []).map((c: { id: string }) => c.id);
+  if (convIds.length > 0) {
+    const { count } = await supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("conversation_id", convIds)
+      .neq("sender_id", userId)
+      .eq("is_read", false);
+    unreadCount = count ?? 0;
+  }
+
   return (
-    <div className="grid grid-cols-12 gap-6">
-      {/* Sidebar */}
-      <aside className="col-span-12 md:col-span-3 lg:col-span-2">
-        <div className="card sticky top-6 p-4 space-y-4">
-          <div>
-            <p className="text-xs text-white/50">Connecté</p>
-            <p className="font-semibold truncate">{name}</p>
-          </div>
-
-          <nav className="flex flex-col gap-1 text-sm">
-            <Link className="rounded-lg px-3 py-2 hover:bg-white/5" href="/dashboard">
-              Vue d’ensemble
-            </Link>
-            <Link className="rounded-lg px-3 py-2 hover:bg-white/5" href="/dashboard/courses">
-              Mes formations
-            </Link>
-            <Link className="rounded-lg px-3 py-2 hover:bg-white/5" href="/dashboard/sales">
-              Ventes
-            </Link>
-            <Link className="rounded-lg px-3 py-2 hover:bg-white/5" href="/dashboard/messages">
-              Messages
-            </Link>
-            <Link className="rounded-lg px-3 py-2 hover:bg-white/5" href="/dashboard/billing">
-              Abonnement
-            </Link>
-            <Link className="rounded-lg px-3 py-2 hover:bg-white/5" href="/dashboard/settings">
-              Paramètres
-            </Link>
-          </nav>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <section className="col-span-12 md:col-span-9 lg:col-span-10">
+    <div className="flex flex-col gap-6 md:flex-row">
+      <DashboardSidebar unreadCount={unreadCount} />
+      <section className="min-w-0 flex-1">
+        <DashboardTopBar
+          userName={name}
+          notificationCount={unreadCount}
+        />
         {children}
       </section>
     </div>
