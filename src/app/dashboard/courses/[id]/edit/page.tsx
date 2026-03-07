@@ -201,9 +201,26 @@ export default async function EditCoursePage({ params }: PageProps) {
           />
         </div>
 
-        {/* URL VIDÉO */}
+        {/* VIDÉO DE PRÉSENTATION (avant achat) */}
         <div>
-          <label className="block text-sm text-white/70 mb-1">URL vidéo (optionnel)</label>
+          <label className="block text-sm text-white/70 mb-1">Vidéo d&apos;explication / présentation (optionnel)</label>
+          <p className="text-xs text-white/50 mb-1">Visible par les visiteurs avant achat. YouTube ou Vimeo.</p>
+          <input
+            name="preview_video_url"
+            type="url"
+            defaultValue={course.preview_video_url ?? ""}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="w-full rounded-lg px-4 py-2
+                       bg-[#0b0f1a] text-white
+                       border border-white/10
+                       placeholder:text-white/40
+                       focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+        </div>
+
+        {/* URL VIDÉO (contenu acheteurs) */}
+        <div>
+          <label className="block text-sm text-white/70 mb-1">URL vidéo du contenu (optionnel)</label>
           <input
             name="video_url"
             defaultValue={course.video_url ?? ""}

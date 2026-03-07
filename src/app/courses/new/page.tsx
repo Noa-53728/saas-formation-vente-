@@ -19,6 +19,7 @@ const createCourse = async (formData: FormData) => {
   const videoUrl = (formData.get("video_url") as string)?.trim();
   const pdfUrl = (formData.get("pdf_url") as string)?.trim();
   const thumbnailUrl = (formData.get("thumbnail_url") as string)?.trim();
+  const previewVideoUrl = (formData.get("preview_video_url") as string)?.trim();
 
   if (!title || !description || !category || Number.isNaN(price)) {
     throw new Error("Merci de remplir les champs obligatoires.");
@@ -34,6 +35,7 @@ const createCourse = async (formData: FormData) => {
     video_url: videoUrl || null,
     pdf_url: pdfUrl || null,
     thumbnail_url: thumbnailUrl || null,
+    preview_video_url: previewVideoUrl || null,
     author_id: session.user.id,
   });
 
@@ -213,7 +215,59 @@ export default async function NewCoursePage() {
           </div>
         </section>
 
-        {/* Section 2 : Contenu (optionnel) */}
+        {/* Section 2 : Vidéo d'explication (avant achat) */}
+        <section className="rounded-2xl border border-white/10 bg-card/50 p-6 sm:p-8">
+          <div className="mb-6 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/20 text-accent">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                Vidéo d&apos;explication (avant achat)
+              </h2>
+              <p className="text-sm text-white/60">
+                Visible par les visiteurs pour présenter votre formation
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="preview_video_url" className={labelClass}>
+              URL de la vidéo de présentation{" "}
+              <span className="text-white/50">(optionnel)</span>
+            </label>
+            <input
+              id="preview_video_url"
+              name="preview_video_url"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."
+              className={inputClass}
+            />
+            <p className="mt-1 text-xs text-white/50">
+              Les acheteurs pourront la regarder avant d&apos;acheter. YouTube et Vimeo sont supportés.
+            </p>
+          </div>
+        </section>
+
+        {/* Section 3 : Contenu (optionnel) */}
         <section className="rounded-2xl border border-white/10 bg-card/50 p-6 sm:p-8">
           <div className="mb-6 flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white/70">
@@ -232,7 +286,7 @@ export default async function NewCoursePage() {
               </svg>
             </span>
             <h2 className="text-lg font-semibold text-white">
-              Contenu (optionnel)
+              Contenu réservé aux acheteurs (optionnel)
             </h2>
           </div>
 

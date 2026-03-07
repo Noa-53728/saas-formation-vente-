@@ -24,6 +24,7 @@ export async function POST(
   const price = Number(formData.get("price"));
   const video_url = formData.get("video_url") as string | null;
   const pdf_url = formData.get("pdf_url") as string | null;
+  const preview_video_url = formData.get("preview_video_url") as string | null;
   const category = formData.get("category") as string;
 
   // 3️⃣ Vérifier que le cours appartient à l’utilisateur
@@ -46,6 +47,7 @@ export async function POST(
       price_cents: price * 100,
       video_url: video_url || null,
       pdf_url: pdf_url || null,
+      preview_video_url: preview_video_url || null,
       category,
     })
     .eq("id", params.id);

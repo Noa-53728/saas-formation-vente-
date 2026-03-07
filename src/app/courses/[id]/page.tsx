@@ -7,6 +7,67 @@ import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 const formatPrice = (priceCents: number) =>
   `${(priceCents / 100).toFixed(2)} €`;
 
+function getEmbedUrl(url: string): { embedUrl: string; type: "youtube" | "vimeo" } | null {
+  try {
+    const u = new URL(url);
+    // YouTube: watch?v=ID ou youtu.be/ID
+    if (u.hostname.includes("youtube.com") && u.searchParams.get("v")) {
+      return {
+        embedUrl: `https://www.youtube.com/embed/${u.searchParams.get("v")}?rel=0`,
+        type: "youtube",
+      };
+    }
+    if (u.hostname === "youtu.be" && u.pathname.slice(1)) {
+      return {
+        embedUrl: `https://www.youtube.com/embed/${u.pathname.slice(1)}?rel=0`,
+        type: "youtube",
+      };
+    }
+    // Vimeo: vimeo.com/123456
+    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) {
+      return {
+        embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
+        type: "vimeo",
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function PreviewVideoBlock({ url }: { url: string }) {
+  const embed = getEmbedUrl(url);
+  if (embed) {
+    return (
+      <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/30" style={{ paddingBottom: "56.25%" }}>
+        <iframe
+          src={embed.embedUrl}
+          title="Vidéo de présentation de la formation"
+          className="absolute inset-0 h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+    >
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Regarder la vidéo de présentation
+    </a>
+  );
+}
+
 export default async function CourseDetailPage({
   params,
 }: {
@@ -33,6 +94,7 @@ export default async function CourseDetailPage({
       video_url,
       pdf_url,
       thumbnail_url,
+      preview_video_url,
       author_id
     `,
     )
@@ -193,6 +255,16 @@ export default async function CourseDetailPage({
           <p className="text-white/70 whitespace-pre-line">
             {course.description}
           </p>
+
+          {/* Vidéo d'explication (visible avant achat) */}
+          {course.preview_video_url && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-white">
+                Vidéo de présentation
+              </p>
+              <PreviewVideoBlock url={course.preview_video_url} />
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-3 text-sm text-white/70">
             <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5">
