@@ -1,33 +1,23 @@
+import { getLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 async function changePasswordAction(formData: FormData) {
   "use server";
-
+  const locale = await getLocale();
   const supabase = createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect({ href: "/auth/login" });
-
+  if (!user) redirect({ href: "/auth/login", locale });
   const password = (formData.get("password") as string)?.trim() ?? "";
   const confirm = (formData.get("confirm") as string)?.trim() ?? "";
-
-  if (!password || password.length < 6) {
-    redirect({ href: "/dashboard/settings/security?error=short" });
-  }
-  if (password !== confirm) {
-    redirect({ href: "/dashboard/settings/security?error=mismatch" });
-  }
-
+  if (!password || password.length < 6) redirect({ href: "/dashboard/settings/security?error=short", locale });
+  if (password !== confirm) redirect({ href: "/dashboard/settings/security?error=mismatch", locale });
   const { error } = await supabase.auth.updateUser({ password });
-
-  if (error) {
-    redirect({ href: "/dashboard/settings/security?error=update" });
-  }
-
-  redirect({ href: "/dashboard/settings/security?updated=1" });
+  if (error) redirect({ href: "/dashboard/settings/security?error=update", locale });
+  redirect({ href: "/dashboard/settings/security?updated=1", locale });
 }
 
 export default async function SecuritySettingsPage({
@@ -41,7 +31,7 @@ export default async function SecuritySettingsPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect({ href: "/auth/login" });
+  if (!user) redirect({ href: "/auth/login", locale: await getLocale() });
 
   const params = await searchParams;
   const showSuccess = params.updated === "1";

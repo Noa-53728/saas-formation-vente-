@@ -1,26 +1,22 @@
+import { getLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import AvatarUpload from "@/components/dashboard/AvatarUpload";
 
 async function updateProfileAction(formData: FormData) {
   "use server";
-
+  const locale = await getLocale();
   const supabase = createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect({ href: "/auth/login" });
-
+  if (!user) redirect({ href: "/auth/login", locale });
   const fullName = (formData.get("full_name") as string)?.trim() ?? "";
   const bio = (formData.get("bio") as string)?.trim() || null;
   const avatarUrl = (formData.get("avatar_url") as string)?.trim() || null;
   const isSeller = formData.get("is_seller") === "on";
-
-  if (!fullName) {
-    redirect({ href: "/dashboard/settings/profile?error=name" });
-  }
-
+  if (!fullName) redirect({ href: "/dashboard/settings/profile?error=name", locale });
   await supabase
     .from("profiles")
     .update({
@@ -31,7 +27,7 @@ async function updateProfileAction(formData: FormData) {
     })
     .eq("id", user.id);
 
-  redirect({ href: "/dashboard/settings/profile?updated=1" });
+  redirect({ href: "/dashboard/settings/profile?updated=1", locale });
 }
 
 export default async function ProfileSettingsPage({
@@ -45,7 +41,7 @@ export default async function ProfileSettingsPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect({ href: "/auth/login" });
+  if (!user) redirect({ href: "/auth/login", locale: await getLocale() });
 
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")

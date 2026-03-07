@@ -1,3 +1,4 @@
+import { getLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import SubscribeButtons from "./SubscribeButtons";
 import ConnectPayoutButton from "./ConnectPayoutButton";
@@ -6,15 +7,16 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 async function updatePaypalEmailAction(formData: FormData) {
   "use server";
+  const locale = await getLocale();
   const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect({ href: "/auth/login" });
+  if (!user) redirect({ href: "/auth/login", locale });
   const email = (formData.get("paypal_email") as string)?.trim() || null;
   await supabase
     .from("profiles")
     .update({ paypal_email: email })
     .eq("id", user.id);
-  redirect({ href: "/dashboard/billing?paypal=updated" });
+  redirect({ href: "/dashboard/billing?paypal=updated", locale });
 }
 
 const PLAN_LABELS: Record<string, string> = {

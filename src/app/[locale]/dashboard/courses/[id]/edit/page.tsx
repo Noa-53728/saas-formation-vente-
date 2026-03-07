@@ -1,3 +1,4 @@
+import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -21,7 +22,8 @@ export default async function EditCoursePage({ params }: PageProps) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) redirect({ href: "/auth/login" });
+  const locale = await getLocale();
+  if (!session) redirect({ href: "/auth/login", locale });
 
   // 2) course
   const { data: course } = await supabase
@@ -30,10 +32,8 @@ export default async function EditCoursePage({ params }: PageProps) {
     .eq("id", params.id)
     .maybeSingle();
 
-  if (!course) redirect({ href: "/dashboard" });
-
-  // 3) check author
-  if (course.author_id !== session.user.id) redirect({ href: "/dashboard" });
+  if (!course) redirect({ href: "/dashboard", locale });
+  if (course.author_id !== session.user.id) redirect({ href: "/dashboard", locale });
 
   // 4) sales (purchases)
   // Si ton tableau purchases a "amount_cents", on l’utilise.

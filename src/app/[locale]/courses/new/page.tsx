@@ -1,3 +1,4 @@
+import { getLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -9,7 +10,8 @@ const createCourse = async (formData: FormData) => {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) redirect({ href: "/auth/login" });
+  const locale = await getLocale();
+  if (!session) redirect({ href: "/auth/login", locale });
 
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim();
@@ -42,7 +44,7 @@ const createCourse = async (formData: FormData) => {
     throw new Error(`Impossible de créer la formation : ${error.message}`);
   }
 
-  redirect({ href: "/dashboard/courses?created=1" });
+  redirect({ href: "/dashboard/courses?created=1", locale });
 };
 
 const inputClass =
@@ -56,7 +58,7 @@ export default async function NewCoursePage() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) redirect({ href: "/auth/login" });
+  if (!session) redirect({ href: "/auth/login", locale: await getLocale() });
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">

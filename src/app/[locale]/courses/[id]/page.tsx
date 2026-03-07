@@ -1,4 +1,5 @@
 import { notFound, redirect as redirectExternal } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import Stripe from "stripe";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
@@ -171,7 +172,7 @@ export default async function CourseDetailPage({
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) redirect({ href: "/auth/login" });
+    if (!user) redirect({ href: "/auth/login", locale: await getLocale() });
 
     const { data: course } = await supabase
       .from("courses")
@@ -247,12 +248,10 @@ export default async function CourseDetailPage({
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) redirect({ href: "/auth/login" });
-
-    // éviter de "contacter" soi-même
-    if (user.id === course.author_id) redirect({ href: "/dashboard" });
-
-    redirect({ href: `/messages/${course.id}/${course.author_id}` });
+    const locale = await getLocale();
+    if (!user) redirect({ href: "/auth/login", locale });
+    if (user.id === course.author_id) redirect({ href: "/dashboard", locale });
+    redirect({ href: `/messages/${course.id}/${course.author_id}`, locale });
   };
 
   return (

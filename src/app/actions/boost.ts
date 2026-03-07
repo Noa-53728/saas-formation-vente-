@@ -1,6 +1,7 @@
 "use server";
 
 import Stripe from "stripe";
+import { getLocale } from "next-intl/server";
 import { redirect as redirectExternal } from "next/navigation";
 import { redirect } from "@/i18n/navigation";
 import { headers } from "next/headers";
@@ -25,9 +26,10 @@ export async function createBoostCheckoutAction(formData: FormData) {
   const courseId = String(formData.get("courseId") ?? "").trim();
   if (!courseId) throw new Error("courseId manquant");
 
+  const locale = await getLocale();
   const supabase = createSupabaseServerClient();
   const { data: userData, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !userData?.user) redirect({ href: "/auth/login" });
+  if (userErr || !userData?.user) redirect({ href: "/auth/login", locale });
 
   const user = userData.user;
 
@@ -67,11 +69,12 @@ const BOOST_DAYS = 7;
 /** Applique un boost gratuit pour un utilisateur Pro (illimité) ou Creator (3/mois). */
 export async function applyFreeBoostAction(formData: FormData) {
   const courseId = String(formData.get("courseId") ?? "").trim();
-  if (!courseId) redirect({ href: "/dashboard/courses?error=missing" });
+  const locale = await getLocale();
+  if (!courseId) redirect({ href: "/dashboard/courses?error=missing", locale });
 
   const supabase = createSupabaseServerClient();
   const { data: userData } = await supabase.auth.getUser();
-  if (!userData?.user) redirect({ href: "/auth/login" });
+  if (!userData?.user) redirect({ href: "/auth/login", locale });
   const userId = userData.user.id;
 
   const { data: course } = await supabase
@@ -80,7 +83,7 @@ export async function applyFreeBoostAction(formData: FormData) {
     .eq("id", courseId)
     .maybeSingle();
 
-  if (!course || course.author_id !== userId) redirect({ href: "/dashboard/courses?error=forbidden" });
+  if (!course || course.author_id !== userId) redirect({ href: "/dashboard/courses?error=forbidden", locale });
 
   const { data: sub } = await supabase
     .from("subscriptions")
@@ -92,7 +95,7 @@ export async function applyFreeBoostAction(formData: FormData) {
     ? (sub.plan_id as "free" | "creator" | "pro")
     : "free";
 
-  if (planId === "free") redirect({ href: "/dashboard/courses?error=plan" });
+  if (planId === "free") redirect({ href: "/dashboard/courses?error=plan", locale });
 
   if (planId === "creator") {
     const now = new Date();
@@ -103,7 +106,7 @@ export async function applyFreeBoostAction(formData: FormData) {
       .eq("user_id", userId)
       .gte("used_at", startOfMonth.toISOString());
 
-    if ((count ?? 0) >= 3) redirect({ href: "/dashboard/courses?error=limit" });
+    if ((count ?? 0) >= 3) redirect({ href: "/dashboard/courses?error=limit", locale });
 
     await supabase.from("boost_usage").insert({ user_id: userId, used_at: now.toISOString() });
   }
@@ -119,5 +122,5 @@ export async function applyFreeBoostAction(formData: FormData) {
     })
     .eq("id", courseId);
 
-  redirect({ href: "/dashboard/courses?boost=success" });
+  redirect({ href: "/dashboard/courses?boost=success", locale });
 }

@@ -3,13 +3,13 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 async function updateNotificationsAction(formData: FormData) {
   "use server";
-
+  const locale = await getLocale();
   const supabase = createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect({ href: "/auth/login" });
+  if (!user) redirect({ href: "/auth/login", locale });
 
   const notifyMessages = formData.get("notify_messages") === "on";
   const notifySales = formData.get("notify_sales") === "on";
@@ -24,7 +24,7 @@ async function updateNotificationsAction(formData: FormData) {
     })
     .eq("id", user.id);
 
-  redirect({ href: "/dashboard/settings/notifications?updated=1" });
+  redirect({ href: "/dashboard/settings/notifications?updated=1", locale });
 }
 
 export default async function NotificationsSettingsPage({
@@ -38,7 +38,7 @@ export default async function NotificationsSettingsPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect({ href: "/auth/login" });
+  if (!user) redirect({ href: "/auth/login", locale: await getLocale() });
 
   const { data: profile } = await supabase
     .from("profiles")

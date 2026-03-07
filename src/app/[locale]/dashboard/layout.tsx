@@ -14,7 +14,7 @@ export default async function DashboardLayout({
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) redirect({ href: "/auth/login" });
+  if (!session) redirect({ href: "/auth/login", locale: await getLocale() });
 
   const userId = session.user.id;
 

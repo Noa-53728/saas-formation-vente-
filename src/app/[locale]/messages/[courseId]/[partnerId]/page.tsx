@@ -14,7 +14,7 @@ export default async function ConversationPage({
   const session = sessionData.session;
 
   if (!session) {
-    redirect({ href: "/auth/login" });
+    redirect({ href: "/auth/login", locale: await getLocale() });
   }
 
   const userId = session.user.id;
