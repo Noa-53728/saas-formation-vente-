@@ -67,29 +67,51 @@ export default async function SettingsPage() {
           </div>
         </Link>
 
-        <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-card p-6 opacity-90">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/10 text-2xl text-white/60">
+        <Link
+          href="/dashboard/settings/notifications"
+          className="group flex items-start gap-4 rounded-2xl border border-white/10 bg-card p-6 transition hover:border-accent/30"
+        >
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent/20 text-2xl text-accent">
             🔔
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="font-semibold text-white">Notifications</h2>
+            <h2 className="font-semibold text-white group-hover:text-accent">
+              Notifications
+            </h2>
             <p className="mt-1 text-sm text-white/60">
-              Messages, ventes et rappels. Bientôt disponible.
+              Messages, ventes et rappels. Choisissez ce que vous recevez.
             </p>
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent">
+              Modifier
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
           </div>
-        </div>
+        </Link>
 
-        <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-card p-6 opacity-90">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/10 text-2xl text-white/60">
+        <Link
+          href="/dashboard/settings/security"
+          className="group flex items-start gap-4 rounded-2xl border border-white/10 bg-card p-6 transition hover:border-accent/30"
+        >
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent/20 text-2xl text-accent">
             🔒
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="font-semibold text-white">Sécurité</h2>
+            <h2 className="font-semibold text-white group-hover:text-accent">
+              Sécurité
+            </h2>
             <p className="mt-1 text-sm text-white/60">
-              Mot de passe et sécurisation du compte. Bientôt disponible.
+              Mot de passe et sécurisation du compte.
             </p>
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent">
+              Modifier
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   );
