@@ -3,11 +3,18 @@
 type Props = {
   showCreator?: boolean;
   showPro?: boolean;
+  className?: string;
 };
+
+const PLANS: { id: "creator" | "pro"; label: string; price: string }[] = [
+  { id: "creator", label: "Creator", price: "10 € / mois" },
+  { id: "pro", label: "Pro", price: "30 € / mois" },
+];
 
 export default function SubscribeButtons({
   showCreator = false,
   showPro = false,
+  className = "",
 }: Props) {
   const subscribe = async (planId: "creator" | "pro") => {
     const res = await fetch("/api/stripe/subscription/checkout", {
@@ -18,28 +25,32 @@ export default function SubscribeButtons({
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(text || "checkout failed");
+      alert(text || "Erreur lors du paiement.");
+      return;
     }
 
     const { url } = await res.json();
-    window.location.href = url;
+    if (url) window.location.href = url;
   };
 
-  return (
-    <div style={{ display: "flex", gap: 12 }}>
-      {showCreator && (
-        <button onClick={() => subscribe("creator")}>
-          Creator – 10$ / mois
-        </button>
-      )}
+  const toShow = PLANS.filter(
+    (p) => (p.id === "creator" && showCreator) || (p.id === "pro" && showPro)
+  );
 
-      {showPro && (
-        <button onClick={() => subscribe("pro")}>
-          Pro – 30$ / mois
+  if (toShow.length === 0) return null;
+
+  return (
+    <div className={`flex flex-wrap gap-3 ${className}`}>
+      {toShow.map((plan) => (
+        <button
+          key={plan.id}
+          type="button"
+          onClick={() => subscribe(plan.id)}
+          className="rounded-xl bg-accent px-4 py-2.5 font-semibold text-white transition hover:bg-accent-hover"
+        >
+          Choisir {plan.label}
         </button>
-      )}
+      ))}
     </div>
   );
 }
-
-
