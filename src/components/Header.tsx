@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import AuthButtons from "./AuthButtons";
 
 export default function Header() {
   return (
@@ -22,9 +21,8 @@ export default function Header() {
           href="/qui-sommes-nous"
           className="rounded-lg border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:scale-105 hover:border-white/40 hover:bg-white/20 hover:shadow-md hover:shadow-accent/10 active:scale-[0.98]"
         >
-          Qui sommes-nous
+          Qui sommes-nous ?
         </Link>
-        <AuthButtons />
       </nav>
     </header>
   );
