@@ -13,6 +13,7 @@ async function updateProfileAction(formData: FormData) {
   if (!user) redirect("/auth/login");
 
   const fullName = (formData.get("full_name") as string)?.trim() ?? "";
+  const bio = (formData.get("bio") as string)?.trim() || null;
   const avatarUrl = (formData.get("avatar_url") as string)?.trim() || null;
   const isSeller = formData.get("is_seller") === "on";
 
@@ -24,6 +25,7 @@ async function updateProfileAction(formData: FormData) {
     .from("profiles")
     .update({
       full_name: fullName,
+      bio,
       avatar_url: avatarUrl,
       is_seller: isSeller,
     })
@@ -47,7 +49,7 @@ export default async function SettingsPage({
 
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")
-    .select("full_name, is_seller, avatar_url, is_verified")
+    .select("full_name, bio, is_seller, avatar_url, is_verified")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -109,6 +111,25 @@ export default async function SettingsPage({
               className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-accent"
               placeholder="Votre nom ou pseudo"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="bio"
+              className="block text-sm font-medium text-white/80 mb-1"
+            >
+              Bio <span className="text-white/50">(optionnel)</span>
+            </label>
+            <textarea
+              id="bio"
+              name="bio"
+              rows={4}
+              maxLength={500}
+              defaultValue={profile?.bio ?? ""}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-accent resize-y"
+              placeholder="Présentez-vous en quelques lignes (formation, expérience…). Visible sur vos fiches formation."
+            />
+            <p className="mt-1 text-xs text-white/50">Maximum 500 caractères.</p>
           </div>
 
           <AvatarUpload

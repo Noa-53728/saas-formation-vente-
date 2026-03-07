@@ -65,7 +65,7 @@ export default async function CourseDetailPage({
   const admin = createSupabaseAdminClient();
   const { data: author } = await admin
     .from("profiles")
-    .select("full_name, is_verified")
+    .select("full_name, is_verified, bio")
     .eq("id", course.author_id)
     .maybeSingle();
 
@@ -222,6 +222,12 @@ export default async function CourseDetailPage({
                   </span>
                 )}
               </span>
+            )}
+
+            {author?.bio && (
+              <p className="w-full text-sm text-white/60 mt-2 whitespace-pre-line">
+                {author.bio}
+              </p>
             )}
 
             <span className="text-white/40">ID : {course.id}</span>
