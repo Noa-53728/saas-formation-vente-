@@ -8,12 +8,13 @@ export default function Header() {
       <Link href="/" className="flex items-center gap-3">
         <Image
           src="/logo-formio.png"
-          alt="Formio"
-          width={120}
+          alt=""
+          width={40}
           height={40}
-          className="h-10 w-auto object-contain"
+          className="h-10 w-10 flex-shrink-0 object-contain"
           priority
         />
+        <span className="text-xl font-semibold text-white">Formio</span>
       </Link>
 
       <nav className="flex items-center gap-6">
