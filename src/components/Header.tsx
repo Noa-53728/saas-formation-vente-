@@ -7,7 +7,7 @@ export default function Header() {
     <header className="flex items-center justify-between mb-12">
       <Link href="/" className="flex items-center gap-3">
         <Image
-          src="/logo-formio.svg"
+          src="/logo-formio.png"
           alt=""
           width={40}
           height={40}
