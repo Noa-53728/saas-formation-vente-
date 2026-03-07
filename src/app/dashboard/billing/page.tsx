@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SubscribeButtons from "./SubscribeButtons";
+import ConnectPayoutButton from "./ConnectPayoutButton";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const PLAN_LABELS: Record<string, string> = {
@@ -17,7 +18,7 @@ const PLAN_DESC: Record<string, string> = {
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string }>;
+  searchParams: Promise<{ checkout?: string; connect?: string }>;
 }) {
   const supabase = createSupabaseServerClient();
 
@@ -26,21 +27,31 @@ export default async function BillingPage({
   } = await supabase.auth.getUser();
 
   let planId: "free" | "creator" | "pro" = "free";
+  let stripeConnectAccountId: string | null = null;
 
   if (user) {
-    const { data: sub } = await supabase
-      .from("subscriptions")
-      .select("plan_id, status")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const [{ data: sub }, { data: profile }] = await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("plan_id, status")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("stripe_connect_account_id")
+        .eq("id", user.id)
+        .maybeSingle(),
+    ]);
 
     if (sub && ["active", "trialing"].includes(sub.status)) {
       planId = sub.plan_id as "free" | "creator" | "pro";
     }
+    stripeConnectAccountId = profile?.stripe_connect_account_id ?? null;
   }
 
   const params = await searchParams;
   const checkoutStatus = params.checkout;
+  const connectStatus = params.connect;
 
   return (
     <div className="space-y-6">
@@ -61,6 +72,38 @@ export default async function BillingPage({
           Paiement annulé. Vous pouvez choisir un plan plus tard.
         </div>
       )}
+      {connectStatus === "success" && (
+        <div className="rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
+          Compte bancaire configuré. Vous recevrez les paiements des ventes sur ce compte.
+        </div>
+      )}
+      {connectStatus === "refresh" && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
+          Le lien a expiré. Cliquez à nouveau sur « Configurer mon compte bancaire » pour continuer.
+        </div>
+      )}
+
+      {/* Compte bancaire pour recevoir les paiements */}
+      <div className="rounded-2xl border border-white/10 bg-card p-6">
+        <h2 className="text-lg font-semibold text-white">
+          Recevoir les paiements des ventes
+        </h2>
+        <p className="mt-1 text-sm text-white/60">
+          Indiquez le compte bancaire sur lequel vous souhaitez recevoir les revenus des formations vendues. Les virements sont gérés par Stripe.
+        </p>
+        {stripeConnectAccountId ? (
+          <div className="mt-4 flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">
+            <span className="text-success">✓</span>
+            <p className="text-sm text-white/90">
+              Compte bancaire configuré. Les paiements des acheteurs vous seront versés selon les délais Stripe.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <ConnectPayoutButton />
+          </div>
+        )}
+      </div>
 
       {/* Plan actuel */}
       <div className="rounded-2xl border border-white/10 bg-card p-6">

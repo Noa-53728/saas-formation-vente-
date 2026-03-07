@@ -175,13 +175,22 @@ export default async function CourseDetailPage({
 
     const { data: course } = await supabase
       .from("courses")
-      .select("id, title, price_cents")
+      .select("id, title, price_cents, author_id")
       .eq("id", courseId)
       .maybeSingle();
 
     if (!course) {
       throw new Error("Formation introuvable");
     }
+
+    const admin = createSupabaseAdminClient();
+    const { data: authorProfile } = await admin
+      .from("profiles")
+      .select("stripe_connect_account_id")
+      .eq("id", course.author_id)
+      .maybeSingle();
+
+    const destinationAccountId = authorProfile?.stripe_connect_account_id ?? null;
 
     const secret = process.env.STRIPE_SECRET_KEY;
     if (!secret) {
@@ -215,6 +224,11 @@ export default async function CourseDetailPage({
       },
       success_url: `${baseUrl}/success`,
       cancel_url: `${baseUrl}/cancel`,
+      ...(destinationAccountId && {
+        payment_intent_data: {
+          transfer_data: { destination: destinationAccountId },
+        },
+      }),
     });
 
     if (checkoutSession.url) {
