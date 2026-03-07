@@ -16,7 +16,15 @@ export default function Header() {
         />
       </Link>
 
-      <AuthButtons />
+      <nav className="flex items-center gap-6">
+        <Link
+          href="/qui-sommes-nous"
+          className="text-sm font-medium text-white/80 transition hover:text-white"
+        >
+          Qui sommes-nous
+        </Link>
+        <AuthButtons />
+      </nav>
     </header>
   );
 }
