@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import SubscribeButtons from "./SubscribeButtons";
 import ConnectPayoutButton from "./ConnectPayoutButton";
+import ManagePlanButton from "./ManagePlanButton";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 async function updatePaypalEmailAction(formData: FormData) {
@@ -43,12 +44,13 @@ export default async function BillingPage({
   let planId: "free" | "creator" | "pro" = "free";
   let stripeConnectAccountId: string | null = null;
   let paypalEmail: string | null = null;
+  let stripeCustomerId: string | null = null;
 
   if (user) {
     const [{ data: sub }, { data: profile }] = await Promise.all([
       supabase
         .from("subscriptions")
-        .select("plan_id, status")
+        .select("plan_id, status, stripe_customer_id")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
@@ -60,6 +62,8 @@ export default async function BillingPage({
 
     if (sub && ["active", "trialing"].includes(sub.status)) {
       planId = sub.plan_id as "free" | "creator" | "pro";
+      const cid = sub.stripe_customer_id;
+      if (cid && cid !== "pending") stripeCustomerId = cid;
     }
     stripeConnectAccountId = profile?.stripe_connect_account_id ?? null;
     paypalEmail = profile?.paypal_email ?? null;
@@ -180,6 +184,14 @@ export default async function BillingPage({
         <p className="mt-3 text-sm text-white/70">
           {PLAN_DESC[planId]}
         </p>
+        {stripeCustomerId && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <ManagePlanButton />
+            <span className="text-xs text-white/50">
+              Changer de plan, mettre à jour la carte ou annuler l’abonnement.
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Plans disponibles selon la situation */}
@@ -231,6 +243,9 @@ export default async function BillingPage({
             <p className="text-xl font-bold text-white">30 €<span className="text-sm font-normal text-white/60">/mois</span></p>
             <SubscribeButtons showPro />
           </div>
+          <p className="mt-3 text-sm text-white/50">
+            Pour rétrograder vers Gratuit ou annuler, utilisez le bouton « Gérer mon abonnement » ci-dessus.
+          </p>
         </div>
       )}
 
@@ -244,7 +259,7 @@ export default async function BillingPage({
               Vous êtes sur le plan maximum
             </h2>
             <p className="mt-2 text-sm text-white/70">
-              Profitez de tous les avantages Pro. Une question ? Consultez le support.
+              Profitez de tous les avantages Pro. Pour passer à Creator ou annuler, utilisez « Gérer mon abonnement » dans la section Plan actuel.
             </p>
             <Link
               href="/dashboard/support"
@@ -300,7 +315,7 @@ export default async function BillingPage({
           <li className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
             <p className="font-medium text-white">Puis-je annuler ou changer de plan ?</p>
             <p className="mt-1 text-sm text-white/70">
-              Oui. Vous pouvez gérer ou annuler votre abonnement depuis votre tableau de bord Stripe (lien envoyé après le premier paiement) ou en nous contactant. Un changement de plan prend effet au prochain cycle.
+              Oui. Si vous avez un abonnement actif, cliquez sur « Gérer mon abonnement » sur cette page : vous pourrez changer de plan (Creator ↔ Pro), mettre à jour votre carte ou annuler. Les changements prennent effet au prochain cycle. Vous pouvez aussi nous contacter via le Support.
             </p>
           </li>
           <li className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
