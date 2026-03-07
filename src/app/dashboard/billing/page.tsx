@@ -98,8 +98,9 @@ export default async function BillingPage({
               <p className="mt-1 text-2xl font-bold text-white">10 €<span className="text-sm font-normal text-white/60">/mois</span></p>
               <ul className="mt-4 space-y-2 text-sm text-white/70">
                 <li>• Formations illimitées</li>
-                <li>• Statistiques de ventes</li>
-                <li>• Support par email</li>
+                <li>• Statistiques détaillées (ventes, revenus)</li>
+                <li>• Support prioritaire par email</li>
+                <li>• Tableau de bord complet</li>
               </ul>
               <SubscribeButtons showCreator className="mt-4" />
             </div>
@@ -109,8 +110,9 @@ export default async function BillingPage({
               <p className="mt-1 text-2xl font-bold text-white">30 €<span className="text-sm font-normal text-white/60">/mois</span></p>
               <ul className="mt-4 space-y-2 text-sm text-white/70">
                 <li>• Tout Creator</li>
-                <li>• Boosts illimités</li>
-                <li>• Badge Pro + visibilité</li>
+                <li>• Boosts illimités (mise en avant formations)</li>
+                <li>• Badge Pro sur votre profil</li>
+                <li>• Visibilité maximale dans la recherche</li>
               </ul>
               <SubscribeButtons showPro className="mt-4" />
             </div>
@@ -155,6 +157,67 @@ export default async function BillingPage({
           </div>
         </div>
       )}
+
+      {/* Utilité des plans payants */}
+      <div className="rounded-2xl border border-white/10 bg-card p-6">
+        <h2 className="text-lg font-semibold text-white">
+          À quoi servent les plans payants ?
+        </h2>
+        <p className="mt-2 text-sm text-white/70">
+          Le plan <strong className="text-white">Gratuit</strong> vous permet de publier des formations et d’échanger avec les acheteurs. Les plans payants débloquent des outils pour vendre plus et mieux.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-white/10 bg-primary p-4">
+            <p className="font-semibold text-white">Creator (10 €/mois)</p>
+            <ul className="mt-2 space-y-1 text-sm text-white/70">
+              <li>• <strong className="text-white/90">Statistiques avancées</strong> : ventes du jour, du mois, revenus, graphiques.</li>
+              <li>• <strong className="text-white/90">Formations sans limite</strong> : publiez autant de formations que vous voulez.</li>
+              <li>• <strong className="text-white/90">Support dédié</strong> : réponse prioritaire à vos questions.</li>
+            </ul>
+          </div>
+          <div className="rounded-xl border border-accent/20 bg-primary p-4">
+            <p className="font-semibold text-white">Pro (30 €/mois)</p>
+            <ul className="mt-2 space-y-1 text-sm text-white/70">
+              <li>• <strong className="text-white/90">Tout Creator</strong>, plus :</li>
+              <li>• <strong className="text-white/90">Boosts illimités</strong> : mettez vos formations en avant autant que vous voulez (7 jours par boost).</li>
+              <li>• <strong className="text-white/90">Badge Pro</strong> : rassurez les acheteurs et sortez en tête des résultats.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ Facturation */}
+      <div className="rounded-2xl border border-white/10 bg-card p-6">
+        <h2 className="text-lg font-semibold text-white">
+          Questions fréquentes – Facturation
+        </h2>
+        <ul className="mt-4 space-y-4">
+          <li className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
+            <p className="font-medium text-white">Comment est facturé mon abonnement ?</p>
+            <p className="mt-1 text-sm text-white/70">
+              L’abonnement est prélevé chaque mois sur la carte enregistrée lors du checkout Stripe. Vous recevez un email de confirmation à chaque renouvellement.
+            </p>
+          </li>
+          <li className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
+            <p className="font-medium text-white">Puis-je annuler ou changer de plan ?</p>
+            <p className="mt-1 text-sm text-white/70">
+              Oui. Vous pouvez gérer ou annuler votre abonnement depuis votre tableau de bord Stripe (lien envoyé après le premier paiement) ou en nous contactant. Un changement de plan prend effet au prochain cycle.
+            </p>
+          </li>
+          <li className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
+            <p className="font-medium text-white">Les achats de formations par les clients sont-ils inclus ?</p>
+            <p className="mt-1 text-sm text-white/70">
+              Non. L’abonnement Formio (Creator / Pro) est distinct des paiements que vous recevez quand quelqu’un achète votre formation. Ces revenus vous sont versés selon les règles Stripe.
+            </p>
+          </li>
+          <li>
+            <p className="font-medium text-white">Une autre question ?</p>
+            <p className="mt-1 text-sm text-white/70">
+              Consultez le <Link href="/dashboard/support" className="text-accent hover:underline">Support</Link> ou écrivez-nous à formio.forms@gmail.com.
+            </p>
+          </li>
+        </ul>
+      </div>
 
       {/* Lien retour */}
       <div className="pt-2">
