@@ -1,44 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import AvatarUpload from "@/components/dashboard/AvatarUpload";
 
-async function updateProfileAction(formData: FormData) {
-  "use server";
-
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth/login");
-
-  const fullName = (formData.get("full_name") as string)?.trim() ?? "";
-  const bio = (formData.get("bio") as string)?.trim() || null;
-  const avatarUrl = (formData.get("avatar_url") as string)?.trim() || null;
-  const isSeller = formData.get("is_seller") === "on";
-
-  if (!fullName) {
-    redirect("/dashboard/settings?error=name");
-  }
-
-  await supabase
-    .from("profiles")
-    .update({
-      full_name: fullName,
-      bio,
-      avatar_url: avatarUrl,
-      is_seller: isSeller,
-    })
-    .eq("id", user.id);
-
-  redirect("/dashboard/settings?updated=1");
-}
-
-export default async function SettingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ updated?: string; error?: string }>;
-}) {
+export default async function SettingsPage() {
   const supabase = createSupabaseServerClient();
 
   const {
@@ -46,142 +10,86 @@ export default async function SettingsPage({
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/auth/login");
-
-  const { data: profile, error: profileErr } = await supabase
-    .from("profiles")
-    .select("full_name, bio, is_seller, avatar_url, is_verified")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profileErr) {
-    return (
-      <div className="card">
-        <p className="font-semibold">Erreur chargement du profil</p>
-        <pre className="text-xs whitespace-pre-wrap mt-3 text-red-200">
-          {profileErr.message}
-        </pre>
-      </div>
-    );
-  }
-
-  const params = await searchParams;
-  const showSuccess = params.updated === "1";
-  const showNameError = params.error === "name";
 
   return (
     <div className="space-y-6">
-      <div className="card">
-        <p className="text-sm text-white/60">Dashboard</p>
-        <h1 className="text-3xl font-semibold mt-2">Paramètres</h1>
-        <p className="text-white/70 mt-2">
-          Gérez votre profil et vos préférences de compte.
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold text-white sm:text-3xl">Paramètres</h1>
+        <p className="text-white/60">
+          Gérez votre compte, votre profil et vos préférences.
         </p>
       </div>
 
-      <div className="card space-y-6">
-        <h2 className="text-xl font-semibold">Profil</h2>
-
-        {showSuccess && (
-          <p className="text-sm text-success bg-success/10 border border-success/30 rounded-lg px-3 py-2">
-            Profil enregistré.
-          </p>
-        )}
-
-        {showNameError && (
-          <p className="text-sm text-red-400 bg-red-400/10 border border-red-400/30 rounded-lg px-3 py-2">
-            Le nom d&apos;utilisateur est obligatoire.
-          </p>
-        )}
-
-        <form action={updateProfileAction} className="space-y-4 max-w-md">
-          <div>
-            <label
-              htmlFor="full_name"
-              className="block text-sm font-medium text-white/80 mb-1"
-            >
-              Nom d&apos;utilisateur <span className="text-red-400">*</span>
-            </label>
-            <input
-              id="full_name"
-              name="full_name"
-              type="text"
-              required
-              minLength={1}
-              defaultValue={profile?.full_name ?? ""}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-accent"
-              placeholder="Votre nom ou pseudo"
-            />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link
+          href="/dashboard/settings/profile"
+          className="group flex items-start gap-4 rounded-2xl border border-white/10 bg-card p-6 transition hover:border-accent/30"
+        >
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent/20 text-2xl text-accent">
+            👤
           </div>
-
-          <div>
-            <label
-              htmlFor="bio"
-              className="block text-sm font-medium text-white/80 mb-1"
-            >
-              Bio <span className="text-white/50">(optionnel)</span>
-            </label>
-            <textarea
-              id="bio"
-              name="bio"
-              rows={4}
-              maxLength={500}
-              defaultValue={profile?.bio ?? ""}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-accent resize-y"
-              placeholder="Présentez-vous en quelques lignes (formation, expérience…). Visible sur vos fiches formation."
-            />
-            <p className="mt-1 text-xs text-white/50">Maximum 500 caractères.</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold text-white group-hover:text-accent">
+              Profil
+            </h2>
+            <p className="mt-1 text-sm text-white/60">
+              Nom d&apos;utilisateur, bio, photo de profil et statut vendeur. Visible sur vos fiches formation.
+            </p>
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent">
+              Modifier
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
           </div>
+        </Link>
 
-          <AvatarUpload
-            userId={user.id}
-            currentAvatarUrl={profile?.avatar_url ?? null}
-          />
-          <div>
-            <label
-              htmlFor="avatar_url"
-              className="block text-sm font-medium text-white/80 mb-1 mt-4"
-            >
-              Ou avec un lien <span className="text-white/50">(optionnel)</span>
-            </label>
-            <input
-              id="avatar_url"
-              name="avatar_url"
-              type="url"
-              defaultValue={profile?.avatar_url ?? ""}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-accent"
-              placeholder="https://exemple.com/ma-photo.jpg"
-            />
+        <Link
+          href="/dashboard/billing"
+          className="group flex items-start gap-4 rounded-2xl border border-white/10 bg-card p-6 transition hover:border-accent/30"
+        >
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent/20 text-2xl text-accent">
+            💳
           </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              id="is_seller"
-              name="is_seller"
-              type="checkbox"
-              defaultChecked={profile?.is_seller ?? false}
-              className="rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
-            />
-            <label
-              htmlFor="is_seller"
-              className="text-sm text-white/80"
-            >
-              Je suis vendeur (je publie des formations)
-            </label>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold text-white group-hover:text-accent">
+              Abonnement & facturation
+            </h2>
+            <p className="mt-1 text-sm text-white/60">
+              Plan actuel, upgrade Creator ou Pro, et gestion du paiement.
+            </p>
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent">
+              Voir
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
           </div>
+        </Link>
 
-          <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">
-            <span className="font-medium text-white/90">Badge vérifié :</span>{" "}
-            {profile?.is_verified ? (
-              <span className="text-success">Oui — visible par les acheteurs</span>
-            ) : (
-              <span>Non — attribué par Formio pour renforcer la confiance</span>
-            )}
+        <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-card p-6 opacity-90">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/10 text-2xl text-white/60">
+            🔔
           </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold text-white">Notifications</h2>
+            <p className="mt-1 text-sm text-white/60">
+              Messages, ventes et rappels. Bientôt disponible.
+            </p>
+          </div>
+        </div>
 
-          <button type="submit" className="button-primary">
-            Enregistrer
-          </button>
-        </form>
+        <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-card p-6 opacity-90">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/10 text-2xl text-white/60">
+            🔒
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold text-white">Sécurité</h2>
+            <p className="mt-1 text-sm text-white/60">
+              Mot de passe et sécurisation du compte. Bientôt disponible.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
