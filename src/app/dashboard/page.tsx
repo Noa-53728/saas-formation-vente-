@@ -5,17 +5,37 @@ import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 const eur = (cents: number) =>
   cents != null ? `${(cents / 100).toFixed(2)} €` : "-";
 
-const MiniChart = () => (
-  <div className="mt-2 flex h-8 items-end gap-0.5">
-    {[40, 65, 45, 80, 55, 70, 60].map((h, i) => (
-      <div
-        key={i}
-        className="w-1.5 rounded-t bg-gradient-to-t from-blue-500 to-accent"
-        style={{ height: `${h}%` }}
-      />
-    ))}
-  </div>
-);
+/** Pourcentage d'évolution : null si pas de comparaison possible. */
+function pctChange(current: number, previous: number): number | null {
+  if (previous === 0) return null;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
+function PctBadge({ value }: { value: number | null }) {
+  if (value === null) return <span className="text-xs text-white/50">—</span>;
+  const isNegative = value < 0;
+  const text = `${isNegative ? "↓" : "↑"} ${isNegative ? "" : "+"}${value}%`;
+  return (
+    <span className={`text-xs ${isNegative ? "text-red-400" : "text-success"}`}>
+      {text}
+    </span>
+  );
+}
+
+function MiniChart({ heights }: { heights: number[] }) {
+  const max = Math.max(1, ...heights);
+  return (
+    <div className="mt-2 flex h-8 items-end gap-0.5">
+      {heights.map((h, i) => (
+        <div
+          key={i}
+          className="w-1.5 rounded-t bg-gradient-to-t from-blue-500 to-accent"
+          style={{ height: `${Math.round((h / max) * 100)}%` }}
+        />
+      ))}
+    </div>
+  );
+}
 
 type OrderRow = {
   id: string;
@@ -82,15 +102,50 @@ export default async function DashboardPage() {
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
 
   const todayOrders = orders.filter((o) => new Date(o.created_at).getTime() >= startOfToday);
+  const yesterdayOrders = orders.filter((o) => {
+    const t = new Date(o.created_at).getTime();
+    return t >= startOfYesterday && t < startOfToday;
+  });
   const monthOrders = orders.filter((o) => new Date(o.created_at).getTime() >= startOfMonth);
+  const previousMonthOrders = orders.filter((o) => {
+    const t = new Date(o.created_at).getTime();
+    return t >= startOfPreviousMonth && t < startOfMonth;
+  });
 
   const salesToday = todayOrders.length;
+  const salesYesterday = yesterdayOrders.length;
   const revenueToday = todayOrders.reduce((s, o) => s + (o.amount_cents ?? 0), 0);
+  const revenueYesterday = yesterdayOrders.reduce((s, o) => s + (o.amount_cents ?? 0), 0);
   const salesMonth = monthOrders.length;
+  const salesPreviousMonth = previousMonthOrders.length;
+  const revenueMonth = monthOrders.reduce((s, o) => s + (o.amount_cents ?? 0), 0);
+  const revenuePreviousMonth = previousMonthOrders.reduce((s, o) => s + (o.amount_cents ?? 0), 0);
   const totalRevenue = orders.reduce((s, o) => s + (o.amount_cents ?? 0), 0);
+
+  const pctSalesToday = pctChange(salesToday, salesYesterday);
+  const pctRevenueToday = pctChange(revenueToday, revenueYesterday);
+  const pctSalesMonth = pctChange(salesMonth, salesPreviousMonth);
+  const pctRevenueMonth = pctChange(revenueMonth, revenuePreviousMonth);
+
+  const last7DaysRevenue: number[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    d.setHours(0, 0, 0, 0);
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    const dayOrders = orders.filter((o) => {
+      const t = new Date(o.created_at).getTime();
+      return t >= d.getTime() && t < next.getTime();
+    });
+    last7DaysRevenue.push(dayOrders.reduce((s, o) => s + (o.amount_cents ?? 0), 0));
+  }
+  const max7Days = Math.max(1, ...last7DaysRevenue);
 
   const recentOrders = orders.slice(0, 5);
   const buyerIds = [...new Set(recentOrders.map((o) => o.user_id))];
@@ -119,34 +174,34 @@ export default async function DashboardPage() {
         <div className="rounded-2xl border border-white/10 bg-card p-5">
           <p className="text-sm text-white/60">Ventes aujourd&apos;hui</p>
           <p className="mt-1 text-2xl font-bold text-white">{salesToday}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-success">
-            <span>↑</span> +1.9%
+          <p className="mt-1 flex items-center gap-1">
+            <PctBadge value={pctSalesToday} />
           </p>
-          <MiniChart />
+          <MiniChart heights={last7DaysRevenue} />
         </div>
         <div className="rounded-2xl border border-white/10 bg-card p-5">
           <p className="text-sm text-white/60">Revenus aujourd&apos;hui</p>
           <p className="mt-1 text-2xl font-bold text-white">{eur(revenueToday)}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-success">
-            <span>↑</span> +1.9%
+          <p className="mt-1 flex items-center gap-1">
+            <PctBadge value={pctRevenueToday} />
           </p>
-          <MiniChart />
+          <MiniChart heights={last7DaysRevenue} />
         </div>
         <div className="rounded-2xl border border-white/10 bg-card p-5">
           <p className="text-sm text-white/60">Ventes ce mois</p>
           <p className="mt-1 text-2xl font-bold text-white">{salesMonth}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-success">
-            <span>↑</span> +1.9%
+          <p className="mt-1 flex items-center gap-1">
+            <PctBadge value={pctSalesMonth} />
           </p>
-          <MiniChart />
+          <MiniChart heights={last7DaysRevenue} />
         </div>
         <div className="rounded-2xl border border-white/10 bg-card p-5">
           <p className="text-sm text-white/60">Total des revenus</p>
           <p className="mt-1 text-2xl font-bold text-white">{eur(totalRevenue)}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-success">
-            <span>↑</span> +1.9%
+          <p className="mt-1 flex items-center gap-1">
+            <PctBadge value={pctRevenueMonth} />
           </p>
-          <MiniChart />
+          <MiniChart heights={last7DaysRevenue} />
         </div>
       </div>
 
@@ -163,17 +218,18 @@ export default async function DashboardPage() {
               </span>
             </div>
             <div className="mt-4 h-48 flex items-end gap-2">
-              {[65, 45, 80, 55, 70, 60, 75].map((h, i) => (
+              {last7DaysRevenue.map((revenue, i) => (
                 <div
                   key={i}
                   className="flex-1 rounded-t bg-gradient-to-t from-blue-500 to-accent transition opacity-90 hover:opacity-100"
-                  style={{ height: `${h}%` }}
+                  style={{ height: `${Math.round((revenue / max7Days) * 100)}%` }}
+                  title={eur(revenue)}
                 />
               ))}
             </div>
             <div className="mt-4 flex flex-wrap gap-4 text-sm text-white/60">
               <span>{eur(totalRevenue)} de revenus</span>
-              <span>+ {orders.length} ventes</span>
+              <span>{orders.length} ventes</span>
             </div>
           </div>
 
