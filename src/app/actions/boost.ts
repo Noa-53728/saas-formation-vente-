@@ -60,3 +60,63 @@ export async function createBoostCheckoutAction(formData: FormData) {
   if (!session.url) throw new Error("URL Stripe manquante");
   redirect(session.url);
 }
+
+const BOOST_DAYS = 7;
+
+/** Applique un boost gratuit pour un utilisateur Pro (illimité) ou Creator (3/mois). */
+export async function applyFreeBoostAction(formData: FormData) {
+  const courseId = String(formData.get("courseId") ?? "").trim();
+  if (!courseId) redirect("/dashboard/courses?error=missing");
+
+  const supabase = createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData?.user) redirect("/auth/login");
+  const userId = userData.user.id;
+
+  const { data: course } = await supabase
+    .from("courses")
+    .select("id, author_id")
+    .eq("id", courseId)
+    .maybeSingle();
+
+  if (!course || course.author_id !== userId) redirect("/dashboard/courses?error=forbidden");
+
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("plan_id, status")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const planId = sub && ["active", "trialing"].includes(sub.status)
+    ? (sub.plan_id as "free" | "creator" | "pro")
+    : "free";
+
+  if (planId === "free") redirect("/dashboard/courses?error=plan");
+
+  if (planId === "creator") {
+    const now = new Date();
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const { count } = await supabase
+      .from("boost_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("used_at", startOfMonth.toISOString());
+
+    if ((count ?? 0) >= 3) redirect("/dashboard/courses?error=limit");
+
+    await supabase.from("boost_usage").insert({ user_id: userId, used_at: now.toISOString() });
+  }
+
+  const now = new Date();
+  const expires = new Date(now.getTime() + BOOST_DAYS * 24 * 60 * 60 * 1000);
+
+  await supabase
+    .from("courses")
+    .update({
+      boosted_at: now.toISOString(),
+      boost_expires_at: expires.toISOString(),
+    })
+    .eq("id", courseId);
+
+  redirect("/dashboard/courses?boost=success");
+}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { applyFreeBoostAction } from "@/app/actions/boost";
 
 const formatPrice = (priceCents: number | null) =>
   typeof priceCents === "number" ? `${(priceCents / 100).toFixed(2)} €` : "-";
@@ -13,7 +14,11 @@ type AuthoredCourse = {
   boost_expires_at: string | null;
 };
 
-export default async function DashboardCoursesPage() {
+export default async function DashboardCoursesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ boost?: string; error?: string }>;
+}) {
   const supabase = createSupabaseServerClient();
 
   const {
@@ -21,6 +26,30 @@ export default async function DashboardCoursesPage() {
   } = await supabase.auth.getUser();
 
   const userId = user!.id;
+
+  let planId: "free" | "creator" | "pro" = "free";
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("plan_id, status")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (sub && ["active", "trialing"].includes(sub.status)) {
+    planId = sub.plan_id as "free" | "creator" | "pro";
+  }
+
+  let creatorBoostsUsed = 0;
+  if (planId === "creator") {
+    const now = new Date();
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const { count } = await supabase
+      .from("boost_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("used_at", startOfMonth.toISOString());
+    creatorBoostsUsed = count ?? 0;
+  }
+
+  const params = await searchParams;
 
   const { data: authoredCoursesRaw, error } = await supabase
     .from("courses")
@@ -53,8 +82,26 @@ export default async function DashboardCoursesPage() {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
+  const showFreeBoost = planId === "pro" || (planId === "creator" && creatorBoostsUsed < 3);
+
   return (
     <div className="grid gap-6">
+      {params.boost === "success" && (
+        <p className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm text-green-400">
+          Formation boostée avec succès pour 7 jours.
+        </p>
+      )}
+      {params.error === "plan" && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-400">
+          Passez au plan Creator ou Pro pour booster gratuitement.
+        </p>
+      )}
+      {params.error === "limit" && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-400">
+          Vous avez utilisé vos 3 boosts gratuits ce mois. Passez au plan Pro pour des boosts illimités.
+        </p>
+      )}
+
       <div className="card">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -128,12 +175,26 @@ export default async function DashboardCoursesPage() {
                     </p>
 
                     {!active ? (
-                      <Link
-                        href={`/api/stripe/boost?courseId=${course.id}`}
-                        className="text-xs rounded-lg px-3 py-2 bg-accent text-white hover:opacity-90 transition whitespace-nowrap"
-                      >
-                        Booster 7 jours • 4,99 €
-                      </Link>
+                      showFreeBoost ? (
+                        <form action={applyFreeBoostAction} className="inline">
+                          <input type="hidden" name="courseId" value={course.id} />
+                          <button
+                            type="submit"
+                            className="text-xs rounded-lg px-3 py-2 bg-accent text-white hover:opacity-90 transition whitespace-nowrap"
+                          >
+                            {planId === "pro"
+                              ? "Booster gratuitement"
+                              : `Booster gratuitement (${creatorBoostsUsed}/3 ce mois)`}
+                          </button>
+                        </form>
+                      ) : (
+                        <Link
+                          href={`/api/stripe/boost?courseId=${course.id}`}
+                          className="text-xs rounded-lg px-3 py-2 bg-accent text-white hover:opacity-90 transition whitespace-nowrap"
+                        >
+                          Booster 7 jours • 4,99 €
+                        </Link>
+                      )
                     ) : (
                       <span className="text-xs text-white/40 whitespace-nowrap">
                         Déjà boostée
