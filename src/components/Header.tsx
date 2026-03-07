@@ -19,7 +19,7 @@ export default function Header() {
       <nav className="flex items-center gap-6">
         <Link
           href="/qui-sommes-nous"
-          className="text-sm font-medium text-white/80 transition hover:text-white"
+          className="rounded-lg border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:scale-105 hover:border-white/40 hover:bg-white/20 hover:shadow-md hover:shadow-accent/10 active:scale-[0.98]"
         >
           Qui sommes-nous
         </Link>
