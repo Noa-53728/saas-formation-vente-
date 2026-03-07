@@ -8,13 +8,13 @@ async function updatePaypalEmailAction(formData: FormData) {
   "use server";
   const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  if (!user) redirect({ href: "/auth/login" });
   const email = (formData.get("paypal_email") as string)?.trim() || null;
   await supabase
     .from("profiles")
     .update({ paypal_email: email })
     .eq("id", user.id);
-  redirect("/dashboard/billing?paypal=updated");
+  redirect({ href: "/dashboard/billing?paypal=updated" });
 }
 
 const PLAN_LABELS: Record<string, string> = {

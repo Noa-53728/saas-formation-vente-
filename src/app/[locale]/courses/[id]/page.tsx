@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect as redirectExternal } from "next/navigation";
 import { Link, redirect } from "@/i18n/navigation";
 import Stripe from "stripe";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
@@ -171,7 +171,7 @@ export default async function CourseDetailPage({
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) redirect("/auth/login");
+    if (!user) redirect({ href: "/auth/login" });
 
     const { data: course } = await supabase
       .from("courses")
@@ -232,7 +232,7 @@ export default async function CourseDetailPage({
     });
 
     if (checkoutSession.url) {
-      redirect(checkoutSession.url);
+      redirectExternal(checkoutSession.url);
     }
 
     throw new Error("Impossible de créer la session Stripe");
@@ -247,12 +247,12 @@ export default async function CourseDetailPage({
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) redirect("/auth/login");
+    if (!user) redirect({ href: "/auth/login" });
 
     // éviter de "contacter" soi-même
-    if (user.id === course.author_id) redirect("/dashboard");
+    if (user.id === course.author_id) redirect({ href: "/dashboard" });
 
-    redirect(`/messages/${course.id}/${course.author_id}`);
+    redirect({ href: `/messages/${course.id}/${course.author_id}` });
   };
 
   return (

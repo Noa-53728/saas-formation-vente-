@@ -9,7 +9,7 @@ const createCourse = async (formData: FormData) => {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) redirect("/auth/login");
+  if (!session) redirect({ href: "/auth/login" });
 
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim();
@@ -42,7 +42,7 @@ const createCourse = async (formData: FormData) => {
     throw new Error(`Impossible de créer la formation : ${error.message}`);
   }
 
-  redirect("/dashboard/courses?created=1");
+  redirect({ href: "/dashboard/courses?created=1" });
 };
 
 const inputClass =
@@ -56,7 +56,7 @@ export default async function NewCoursePage() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) redirect("/auth/login");
+  if (!session) redirect({ href: "/auth/login" });
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">

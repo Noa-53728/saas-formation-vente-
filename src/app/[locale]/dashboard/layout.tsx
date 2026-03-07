@@ -14,7 +14,7 @@ export default async function DashboardLayout({
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) redirect("/auth/login");
+  if (!session) redirect({ href: "/auth/login" });
 
   const userId = session.user.id;
 

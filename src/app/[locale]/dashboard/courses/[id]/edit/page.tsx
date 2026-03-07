@@ -21,7 +21,7 @@ export default async function EditCoursePage({ params }: PageProps) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) redirect("/auth/login");
+  if (!session) redirect({ href: "/auth/login" });
 
   // 2) course
   const { data: course } = await supabase
@@ -30,10 +30,10 @@ export default async function EditCoursePage({ params }: PageProps) {
     .eq("id", params.id)
     .maybeSingle();
 
-  if (!course) redirect("/dashboard");
+  if (!course) redirect({ href: "/dashboard" });
 
   // 3) check author
-  if (course.author_id !== session.user.id) redirect("/dashboard");
+  if (course.author_id !== session.user.id) redirect({ href: "/dashboard" });
 
   // 4) sales (purchases)
   // Si ton tableau purchases a "amount_cents", on l’utilise.

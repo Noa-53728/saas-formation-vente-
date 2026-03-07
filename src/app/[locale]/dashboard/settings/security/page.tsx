@@ -9,25 +9,25 @@ async function changePasswordAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) redirect({ href: "/auth/login" });
 
   const password = (formData.get("password") as string)?.trim() ?? "";
   const confirm = (formData.get("confirm") as string)?.trim() ?? "";
 
   if (!password || password.length < 6) {
-    redirect("/dashboard/settings/security?error=short");
+    redirect({ href: "/dashboard/settings/security?error=short" });
   }
   if (password !== confirm) {
-    redirect("/dashboard/settings/security?error=mismatch");
+    redirect({ href: "/dashboard/settings/security?error=mismatch" });
   }
 
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    redirect("/dashboard/settings/security?error=update");
+    redirect({ href: "/dashboard/settings/security?error=update" });
   }
 
-  redirect("/dashboard/settings/security?updated=1");
+  redirect({ href: "/dashboard/settings/security?updated=1" });
 }
 
 export default async function SecuritySettingsPage({
@@ -41,7 +41,7 @@ export default async function SecuritySettingsPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) redirect({ href: "/auth/login" });
 
   const params = await searchParams;
   const showSuccess = params.updated === "1";

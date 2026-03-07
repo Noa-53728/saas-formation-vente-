@@ -18,7 +18,7 @@ export default async function DashboardMessagesPage() {
   const session = sessionData.session;
 
   if (!session) {
-    redirect("/auth/login");
+    redirect({ href: "/auth/login" });
   }
 
   const userId = session.user.id;

@@ -10,7 +10,7 @@ async function updateProfileAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) redirect({ href: "/auth/login" });
 
   const fullName = (formData.get("full_name") as string)?.trim() ?? "";
   const bio = (formData.get("bio") as string)?.trim() || null;
@@ -18,7 +18,7 @@ async function updateProfileAction(formData: FormData) {
   const isSeller = formData.get("is_seller") === "on";
 
   if (!fullName) {
-    redirect("/dashboard/settings/profile?error=name");
+    redirect({ href: "/dashboard/settings/profile?error=name" });
   }
 
   await supabase
@@ -31,7 +31,7 @@ async function updateProfileAction(formData: FormData) {
     })
     .eq("id", user.id);
 
-  redirect("/dashboard/settings/profile?updated=1");
+  redirect({ href: "/dashboard/settings/profile?updated=1" });
 }
 
 export default async function ProfileSettingsPage({
@@ -45,7 +45,7 @@ export default async function ProfileSettingsPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) redirect({ href: "/auth/login" });
 
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")

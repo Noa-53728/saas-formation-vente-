@@ -14,7 +14,7 @@ export default async function ConversationPage({
   const session = sessionData.session;
 
   if (!session) {
-    redirect("/auth/login");
+    redirect({ href: "/auth/login" });
   }
 
   const userId = session.user.id;

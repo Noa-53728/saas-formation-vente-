@@ -9,7 +9,7 @@ async function updateNotificationsAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) redirect({ href: "/auth/login" });
 
   const notifyMessages = formData.get("notify_messages") === "on";
   const notifySales = formData.get("notify_sales") === "on";
@@ -24,7 +24,7 @@ async function updateNotificationsAction(formData: FormData) {
     })
     .eq("id", user.id);
 
-  redirect("/dashboard/settings/notifications?updated=1");
+  redirect({ href: "/dashboard/settings/notifications?updated=1" });
 }
 
 export default async function NotificationsSettingsPage({
@@ -38,7 +38,7 @@ export default async function NotificationsSettingsPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) redirect({ href: "/auth/login" });
 
   const { data: profile } = await supabase
     .from("profiles")

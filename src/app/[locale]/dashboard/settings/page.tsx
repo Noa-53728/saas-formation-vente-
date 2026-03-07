@@ -8,7 +8,7 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/login");
+  if (!user) redirect({ href: "/auth/login" });
 
   return (
     <div className="space-y-6">
