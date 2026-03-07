@@ -79,6 +79,32 @@ export default function SupportPage() {
             formio.forms@gmail.com
           </a>
         </div>
+        <div className="rounded-2xl border border-white/10 bg-card p-6">
+          <h3 className="font-semibold text-white">Conditions générales</h3>
+          <p className="mt-2 text-sm text-white/70">
+            Consultez les conditions générales d&apos;utilisation de la plateforme Formio.
+          </p>
+          <Link
+            href="/conditions-generales"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 font-semibold text-white transition hover:bg-white/10"
+          >
+            Voir les conditions
+            <span>→</span>
+          </Link>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-card p-6">
+          <h3 className="font-semibold text-white">Confidentialité</h3>
+          <p className="mt-2 text-sm text-white/70">
+            Politique de confidentialité et protection de vos données personnelles.
+          </p>
+          <Link
+            href="/confidentialite"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 font-semibold text-white transition hover:bg-white/10"
+          >
+            Voir la politique
+            <span>→</span>
+          </Link>
+        </div>
       </div>
     </div>
   );
