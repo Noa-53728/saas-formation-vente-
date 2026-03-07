@@ -41,7 +41,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-card p-6">
+      <div id="guide" className="rounded-2xl border border-white/10 bg-card p-6 scroll-mt-6">
         <h2 className="text-lg font-semibold text-white">Questions fréquentes</h2>
         <ul className="mt-4 space-y-6">
           {faq.map((item, i) => (
@@ -60,7 +60,7 @@ export default function SupportPage() {
             Découvrez comment configurer votre compte, publier votre première formation et gérer vos ventes.
           </p>
           <Link
-            href="/dashboard"
+            href="#guide"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 font-semibold text-white transition hover:bg-accent-hover"
           >
             Voir le guide
