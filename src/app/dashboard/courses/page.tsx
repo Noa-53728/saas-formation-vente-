@@ -17,7 +17,7 @@ type AuthoredCourse = {
 export default async function DashboardCoursesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ boost?: string; error?: string }>;
+  searchParams: Promise<{ boost?: string; error?: string; created?: string }>;
 }) {
   const supabase = createSupabaseServerClient();
 
@@ -86,6 +86,11 @@ export default async function DashboardCoursesPage({
 
   return (
     <div className="grid gap-6">
+      {params.created === "1" && (
+        <p className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm text-green-400">
+          Formation créée avec succès. Elle est maintenant visible sur la marketplace.
+        </p>
+      )}
       {params.boost === "success" && (
         <p className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm text-green-400">
           Formation boostée avec succès pour 7 jours.
