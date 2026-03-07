@@ -1,0 +1,30 @@
+{
+  "common": {
+    "siteName": "Formio",
+    "language": "Language",
+    "fr": "Français",
+    "en": "English"
+  },
+  "nav": {
+    "about": "About us"
+  },
+  "home": {
+    "badge": "Professional training marketplace",
+    "title": "Sell and find your online courses with ease.",
+    "subtitle": "Formio is a secure platform connecting course creators and learners, with automated payments and access.",
+    "feature1": "Publish your courses and start selling",
+    "feature2": "Manage your sales and view your revenue at a glance.",
+    "feature3": "Pay securely and get instant access to courses.",
+    "createAccount": "Create account",
+    "signIn": "Sign in",
+    "alreadyAccount": "Already have an account?",
+    "dashboardPreview": "Dashboard preview",
+    "salesToday": "Sales today",
+    "revenueToday": "Revenue today",
+    "salesMonth": "Sales this month",
+    "totalRevenue": "Total revenue",
+    "salesStats": "Sales stats · 7 days",
+    "myCourses": "My courses",
+    "sale": "Sale"
+  }
+}

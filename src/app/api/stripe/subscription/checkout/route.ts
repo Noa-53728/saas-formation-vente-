@@ -16,6 +16,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const planId = body?.planId as "creator" | "pro" | undefined;
+  const locale = (body?.locale as string) || "fr";
 
   if (!planId || (planId !== "creator" && planId !== "pro")) {
     return new NextResponse("Invalid planId", { status: 400 });
@@ -65,14 +66,14 @@ export async function POST(req: Request) {
     if (upErr) return new NextResponse("Subscriptions upsert failed", { status: 500 });
   }
 
-  // 4) Créer session Checkout subscription
+  // 4) Créer session Checkout subscription (locale pour retour dans la même langue)
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: stripeCustomerId,
     line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
-    success_url: `${appUrl}/dashboard/billing?checkout=success`,
-    cancel_url: `${appUrl}/dashboard/billing?checkout=cancel`,
+    success_url: `${appUrl}/${locale}/dashboard/billing?checkout=success`,
+    cancel_url: `${appUrl}/${locale}/dashboard/billing?checkout=cancel`,
 
     client_reference_id: user.id,
 

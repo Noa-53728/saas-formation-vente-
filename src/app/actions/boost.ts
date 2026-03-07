@@ -1,7 +1,7 @@
 "use server";
 
 import Stripe from "stripe";
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/navigation";
 import { headers } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 

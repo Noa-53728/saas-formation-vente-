@@ -1,0 +1,30 @@
+{
+  "common": {
+    "siteName": "Formio",
+    "language": "Langue",
+    "fr": "Français",
+    "en": "English"
+  },
+  "nav": {
+    "about": "Qui sommes-nous ?"
+  },
+  "home": {
+    "badge": "Marketplace de formations professionnelles",
+    "title": "Vendez et trouvez vos formations en ligne en toute simplicité.",
+    "subtitle": "Formio est une plateforme sécurisée qui met en relation créateurs de formations et apprenants, avec paiement et accès automatisés.",
+    "feature1": "Publiez vos formations et commencez à vendre",
+    "feature2": "Gérez vos ventes et consultez vos revenus en un coup d'œil.",
+    "feature3": "Payez en toute sécurité et accédez instantanément aux formations.",
+    "createAccount": "Créer un compte",
+    "signIn": "Se connecter",
+    "alreadyAccount": "Vous avez déjà un compte ?",
+    "dashboardPreview": "Aperçu tableau de bord",
+    "salesToday": "Ventes aujourd'hui",
+    "revenueToday": "Revenus aujourd'hui",
+    "salesMonth": "Ventes ce mois",
+    "totalRevenue": "Total des revenus",
+    "salesStats": "Statistiques de ventes · 7 jours",
+    "myCourses": "Mes formations",
+    "sale": "Vente"
+  }
+}
