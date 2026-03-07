@@ -26,7 +26,7 @@ export default function DashboardSidebar({
       <div className="sticky top-6 flex flex-col gap-6 rounded-2xl border border-white/10 bg-primary p-4">
         <Link href="/" className="flex items-center gap-3">
           <Image
-            src="/logo-formio.png"
+            src="/logo-formio.svg"
             alt=""
             width={40}
             height={40}
