@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { setRequestLocale } from "next-intl/server";
-import Link from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 
 const check = (
   <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent">
