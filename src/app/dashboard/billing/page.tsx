@@ -1,7 +1,21 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import SubscribeButtons from "./SubscribeButtons";
 import ConnectPayoutButton from "./ConnectPayoutButton";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+
+async function updatePaypalEmailAction(formData: FormData) {
+  "use server";
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+  const email = (formData.get("paypal_email") as string)?.trim() || null;
+  await supabase
+    .from("profiles")
+    .update({ paypal_email: email })
+    .eq("id", user.id);
+  redirect("/dashboard/billing?paypal=updated");
+}
 
 const PLAN_LABELS: Record<string, string> = {
   free: "Gratuit",
@@ -18,7 +32,7 @@ const PLAN_DESC: Record<string, string> = {
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string; connect?: string }>;
+  searchParams: Promise<{ checkout?: string; connect?: string; paypal?: string }>;
 }) {
   const supabase = createSupabaseServerClient();
 
@@ -28,6 +42,7 @@ export default async function BillingPage({
 
   let planId: "free" | "creator" | "pro" = "free";
   let stripeConnectAccountId: string | null = null;
+  let paypalEmail: string | null = null;
 
   if (user) {
     const [{ data: sub }, { data: profile }] = await Promise.all([
@@ -38,7 +53,7 @@ export default async function BillingPage({
         .maybeSingle(),
       supabase
         .from("profiles")
-        .select("stripe_connect_account_id")
+        .select("stripe_connect_account_id, paypal_email")
         .eq("id", user.id)
         .maybeSingle(),
     ]);
@@ -47,6 +62,7 @@ export default async function BillingPage({
       planId = sub.plan_id as "free" | "creator" | "pro";
     }
     stripeConnectAccountId = profile?.stripe_connect_account_id ?? null;
+    paypalEmail = profile?.paypal_email ?? null;
   }
 
   const params = await searchParams;
@@ -82,27 +98,67 @@ export default async function BillingPage({
           Le lien a expiré. Cliquez à nouveau sur « Configurer mon compte bancaire » pour continuer.
         </div>
       )}
+      {params.paypal === "updated" && (
+        <div className="rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
+          Adresse PayPal enregistrée.
+        </div>
+      )}
 
-      {/* Compte bancaire pour recevoir les paiements */}
+      {/* Recevoir les paiements : compte bancaire (Stripe) et PayPal */}
       <div className="rounded-2xl border border-white/10 bg-card p-6">
         <h2 className="text-lg font-semibold text-white">
           Recevoir les paiements des ventes
         </h2>
         <p className="mt-1 text-sm text-white/60">
-          Indiquez le compte bancaire sur lequel vous souhaitez recevoir les revenus des formations vendues. Les virements sont gérés par Stripe.
+          Choisissez au moins une option : compte bancaire (Stripe) et/ou PayPal.
         </p>
-        {stripeConnectAccountId ? (
-          <div className="mt-4 flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">
-            <span className="text-success">✓</span>
-            <p className="text-sm text-white/90">
-              Compte bancaire configuré. Les paiements des acheteurs vous seront versés selon les délais Stripe.
+
+        <div className="mt-6 space-y-6">
+          {/* Option 1 : Compte bancaire Stripe */}
+          <div>
+            <h3 className="text-sm font-medium text-white/90">Compte bancaire (Stripe)</h3>
+            {stripeConnectAccountId ? (
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">
+                <span className="text-success">✓</span>
+                <p className="text-sm text-white/90">
+                  Compte bancaire configuré. Les virements vous seront versés selon les délais Stripe.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-2">
+                <ConnectPayoutButton />
+              </div>
+            )}
+          </div>
+
+          {/* Option 2 : PayPal */}
+          <div>
+            <h3 className="text-sm font-medium text-white/90">Recevoir sur PayPal</h3>
+            <p className="mt-1 text-xs text-white/50">
+              Indiquez l’adresse email associée à votre compte PayPal pour recevoir vos revenus.
             </p>
+            <form action={updatePaypalEmailAction} className="mt-3 flex flex-wrap items-end gap-3">
+              <input
+                type="email"
+                name="paypal_email"
+                defaultValue={paypalEmail ?? ""}
+                placeholder="votre@email-paypal.com"
+                className="min-w-[220px] rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              />
+              <button
+                type="submit"
+                className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                Enregistrer
+              </button>
+            </form>
+            {paypalEmail && (
+              <p className="mt-2 text-xs text-success">
+                PayPal enregistré : {paypalEmail}
+              </p>
+            )}
           </div>
-        ) : (
-          <div className="mt-4">
-            <ConnectPayoutButton />
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Plan actuel */}
@@ -248,9 +304,9 @@ export default async function BillingPage({
             </p>
           </li>
           <li className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
-            <p className="font-medium text-white">Les achats de formations par les clients sont-ils inclus ?</p>
+            <p className="font-medium text-white">Comment recevoir les revenus des ventes ?</p>
             <p className="mt-1 text-sm text-white/70">
-              Non. L’abonnement Formio (Creator / Pro) est distinct des paiements que vous recevez quand quelqu’un achète votre formation. Ces revenus vous sont versés selon les règles Stripe.
+              Vous pouvez configurer un compte bancaire (Stripe) et/ou une adresse PayPal dans la section « Recevoir les paiements des ventes » ci-dessus. Les virements bancaires passent par Stripe ; les versements PayPal peuvent être effectués sur l’adresse enregistrée.
             </p>
           </li>
           <li>
