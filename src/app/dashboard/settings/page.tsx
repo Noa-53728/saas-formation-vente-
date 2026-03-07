@@ -47,7 +47,7 @@ export default async function SettingsPage({
 
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")
-    .select("full_name, is_seller, avatar_url")
+    .select("full_name, is_seller, avatar_url, is_verified")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -146,6 +146,15 @@ export default async function SettingsPage({
             >
               Je suis vendeur (je publie des formations)
             </label>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">
+            <span className="font-medium text-white/90">Badge vérifié :</span>{" "}
+            {profile?.is_verified ? (
+              <span className="text-success">Oui — visible par les acheteurs</span>
+            ) : (
+              <span>Non — attribué par Formio pour renforcer la confiance</span>
+            )}
           </div>
 
           <button type="submit" className="button-primary">

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Stripe from "stripe";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
 const formatPrice = (priceCents: number) =>
   `${(priceCents / 100).toFixed(2)} €`;
@@ -60,12 +61,24 @@ export default async function CourseDetailPage({
     );
   }
 
-  /* 🔎 Auteur (requête séparée, pas besoin de relation déclarée) */
-  const { data: author } = await supabase
+  /* 🔎 Auteur (profil + badges Vérifié / Pro) */
+  const admin = createSupabaseAdminClient();
+  const { data: author } = await admin
     .from("profiles")
-    .select("full_name")
+    .select("full_name, is_verified")
     .eq("id", course.author_id)
     .maybeSingle();
+
+  const { data: authorSub } = await admin
+    .from("subscriptions")
+    .select("plan_id, status")
+    .eq("user_id", course.author_id)
+    .maybeSingle();
+
+  const isAuthorPro =
+    authorSub &&
+    ["active", "trialing"].includes(authorSub.status) &&
+    authorSub.plan_id === "pro";
 
   /* 🔐 ACCESS */
   const isOwner = userId === course.author_id;
@@ -186,7 +199,30 @@ export default async function CourseDetailPage({
               {formatPrice(course.price_cents)}
             </span>
 
-            {author?.full_name && <span>Par {author.full_name}</span>}
+            {author?.full_name && (
+              <span className="flex flex-wrap items-center gap-2">
+                Par {author.full_name}
+                {author.is_verified && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-300"
+                    title="Vendeur vérifié par Formio"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Vérifié
+                  </span>
+                )}
+                {isAuthorPro && (
+                  <span
+                    className="inline-flex items-center rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent"
+                    title="Vendeur Pro"
+                  >
+                    Pro
+                  </span>
+                )}
+              </span>
+            )}
 
             <span className="text-white/40">ID : {course.id}</span>
           </div>
