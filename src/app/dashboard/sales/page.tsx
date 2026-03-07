@@ -47,6 +47,17 @@ export default async function SalesPage() {
 
   const userId = user.id;
 
+  // 0) Abonnement (Pro = accès au graphique)
+  let isPro = false;
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("plan_id, status")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (sub && ["active", "trialing"].includes(sub.status) && sub.plan_id === "pro") {
+    isPro = true;
+  }
+
   // 1) Cours du créateur
   const { data: myCourses, error: coursesErr } = await admin
     .from("courses")
@@ -115,6 +126,33 @@ export default async function SalesPage() {
 
   const latest = orders.slice(0, 20);
 
+  // Données pour le graphique (7 derniers jours) — Pro uniquement
+  const last7Days: { date: string; label: string; sales: number; revenue: number }[] = [];
+  if (isPro) {
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const next = new Date(d);
+      next.setDate(next.getDate() + 1);
+      const dayOrders = paidOrders.filter((o) => {
+        const t = new Date(o.created_at).getTime();
+        return t >= d.getTime() && t < next.getTime();
+      });
+      last7Days.push({
+        date: d.toISOString().slice(0, 10),
+        label: d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }),
+        sales: dayOrders.length,
+        revenue: dayOrders.reduce((s, o) => s + (o.amount_cents ?? 0), 0),
+      });
+    }
+  }
+
+  const maxRevenue = isPro && last7Days.length
+    ? Math.max(1, ...last7Days.map((d) => d.revenue))
+    : 1;
+
   return (
     <div className="grid gap-6">
       <div className="card">
@@ -122,6 +160,40 @@ export default async function SalesPage() {
         <h1 className="text-3xl font-semibold mt-2">Ventes</h1>
         <p className="text-white/70 mt-2">Vos revenus et ventes récentes.</p>
       </div>
+
+      {!isPro && (
+        <div className="rounded-2xl border border-white/10 bg-card/50 p-4">
+          <p className="text-sm text-white/70">
+            <span className="font-medium text-white">Plan Pro</span> : accédez au graphique des ventes sur 7 jours pour visualiser vos revenus par jour.
+            <a href="/dashboard/billing" className="ml-1 text-accent hover:underline">Voir la facturation</a>
+          </p>
+        </div>
+      )}
+
+      {isPro && last7Days.length > 0 && (
+        <div className="card">
+          <h2 className="text-lg font-semibold text-white">Graphique des ventes (7 jours)</h2>
+          <p className="mt-1 text-sm text-white/60">Revenus par jour</p>
+          <div className="mt-6 flex items-end gap-2 sm:gap-3" style={{ minHeight: "180px" }}>
+            {last7Days.map((day) => (
+              <div key={day.date} className="flex flex-1 flex-col items-center gap-2">
+                <div className="w-full flex flex-col justify-end rounded-t-lg bg-white/5 overflow-hidden" style={{ height: "140px" }}>
+                  <div
+                    className="w-full rounded-t bg-gradient-to-t from-accent/90 to-accent-light transition"
+                    style={{
+                      height: `${Math.round((day.revenue / maxRevenue) * 100)}%`,
+                      minHeight: day.revenue > 0 ? "4px" : "0",
+                    }}
+                    title={`${day.label}: ${eur(day.revenue)} (${day.sales} vente${day.sales !== 1 ? "s" : ""})`}
+                  />
+                </div>
+                <span className="text-xs text-white/60 text-center">{day.label}</span>
+                <span className="text-xs font-medium text-white/80">{eur(day.revenue)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="card">
