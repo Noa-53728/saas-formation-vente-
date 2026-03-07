@@ -1,10 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(false);
@@ -92,14 +94,14 @@ export default function LoginPage() {
           className="button-primary w-full flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? "Connexion..." : "Se connecter"}
+          {loading ? t("signingIn") : t("signIn")}
         </button>
       </form>
       <p className="text-center text-sm text-white/70">
-        Pas de compte ? {" "}
-        <a href="/auth/register" className="text-accent">
-          Créer un compte
-        </a>
+        {t("noAccount")}{" "}
+        <Link href="/auth/register" className="text-accent hover:underline">
+          {t("registerLink")}
+        </Link>
       </p>
     </div>
   );

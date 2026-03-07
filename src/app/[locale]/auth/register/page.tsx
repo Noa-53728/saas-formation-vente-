@@ -1,10 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 export default function RegisterPage() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export default function RegisterPage() {
     const fullName = (form.get("fullName") as string)?.trim() ?? "";
 
     if (!fullName) {
-      setError("Le nom d'utilisateur est obligatoire.");
+      setError(t("nameRequired"));
       setLoading(false);
       return;
     }
@@ -121,14 +123,14 @@ export default function RegisterPage() {
           className="button-primary w-full flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? "Création..." : "Créer mon compte"}
+          {loading ? t("creating") : t("createAccountButton")}
         </button>
       </form>
       <p className="text-center text-sm text-white/70">
-        Déjà inscrit ? {" "}
-        <a href="/auth/login" className="text-accent">
-          Se connecter
-        </a>
+        {t("alreadyAccount")}{" "}
+        <Link href="/auth/login" className="text-accent hover:underline">
+          {t("signIn")}
+        </Link>
       </p>
     </div>
   );

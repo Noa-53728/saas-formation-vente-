@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import Image from "next/image";
 
@@ -45,13 +46,13 @@ const icons = {
 };
 
 const nav = [
-  { href: "/dashboard", label: "Tableau de bord", iconKey: "dashboard" as const },
-  { href: "/dashboard/courses", label: "Mes formations", iconKey: "courses" as const },
-  { href: "/dashboard/sales", label: "Ventes", iconKey: "sales" as const },
-  { href: "/dashboard/messages", label: "Messages", iconKey: "messages" as const, badge: true },
-  { href: "/dashboard/billing", label: "Facturation", iconKey: "billing" as const },
-  { href: "/dashboard/settings", label: "Paramètres", iconKey: "settings" as const },
-  { href: "/dashboard/support", label: "Support", iconKey: "support" as const },
+  { href: "/dashboard", labelKey: "dashboard", iconKey: "dashboard" as const },
+  { href: "/dashboard/courses", labelKey: "myCourses", iconKey: "courses" as const },
+  { href: "/dashboard/sales", labelKey: "sales", iconKey: "sales" as const },
+  { href: "/dashboard/messages", labelKey: "messages", iconKey: "messages" as const, badge: true },
+  { href: "/dashboard/billing", labelKey: "billing", iconKey: "billing" as const },
+  { href: "/dashboard/settings", labelKey: "settings", iconKey: "settings" as const },
+  { href: "/dashboard/support", labelKey: "support", iconKey: "support" as const },
 ];
 
 export default function DashboardSidebar({
@@ -59,6 +60,7 @@ export default function DashboardSidebar({
 }: {
   unreadCount?: number;
 }) {
+  const t = useTranslations("dashboard");
   const pathname = usePathname();
 
   return (
@@ -92,7 +94,7 @@ export default function DashboardSidebar({
                 }`}
               >
                 <span className="text-current opacity-90">{icons[item.iconKey]}</span>
-                <span className="flex-1">{item.label}</span>
+                <span className="flex-1">{t(item.labelKey)}</span>
                 {showBadge && (
                   <span className="min-w-[1.25rem] rounded-full bg-red-500 px-1.5 py-0.5 text-center text-xs font-semibold text-white">
                     {unreadCount > 99 ? "99+" : unreadCount}
