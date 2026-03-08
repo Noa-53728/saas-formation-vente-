@@ -37,7 +37,7 @@ const createCourse = async (formData: FormData) => {
     pdf_url: pdfUrl || null,
     thumbnail_url: thumbnailUrl || null,
     preview_video_url: previewVideoUrl || null,
-    author_id: session.user.id,
+    author_id: session!.user.id,
   });
 
   if (error) {
