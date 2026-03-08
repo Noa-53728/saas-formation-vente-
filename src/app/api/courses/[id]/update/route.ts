@@ -34,7 +34,7 @@ export async function POST(
     .eq("id", params.id)
     .maybeSingle();
 
-  if (!course || course.author_id !== session.user.id) {
+  if (!course || course.author_id !== session!.user.id) {
     return NextResponse.redirect("/dashboard");
   }
 

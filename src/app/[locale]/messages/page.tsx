@@ -20,7 +20,7 @@ export default async function MessagesPage() {
     redirect({ href: "/auth/login", locale: await getLocale() });
   }
 
-  const userId = session.user.id;
+  const userId = session!.user.id;
 
   // 1) Récupérer toutes les conversations où je suis impliqué (buyer ou seller)
   const { data: conversationsRows, error: convErr } = await supabase

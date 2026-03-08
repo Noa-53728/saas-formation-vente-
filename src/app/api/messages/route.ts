@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const userId = sessionData.session.user.id;
+  const userId = sessionData.session!.user.id;
 
   // Vérifier que l'utilisateur est bien participant à la conversation
   const { data: conversation, error: convErr } = await supabase

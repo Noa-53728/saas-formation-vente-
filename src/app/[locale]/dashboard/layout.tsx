@@ -17,7 +17,7 @@ export default async function DashboardLayout({
 
   if (!session) redirect({ href: "/auth/login", locale: await getLocale() });
 
-  const userId = session.user.id;
+  const userId = session!.user.id;
 
   const { data: profile } = await supabase
     .from("profiles")

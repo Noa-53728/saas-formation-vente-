@@ -25,7 +25,7 @@ async function updateProfileAction(formData: FormData) {
       avatar_url: avatarUrl,
       is_seller: isSeller,
     })
-    .eq("id", user.id);
+    .eq("id", user!.id);
 
   redirect({ href: "/dashboard/settings/profile?updated=1", locale });
 }
@@ -46,7 +46,7 @@ export default async function ProfileSettingsPage({
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")
     .select("full_name, bio, is_seller, avatar_url, is_verified")
-    .eq("id", user.id)
+    .eq("id", user!.id)
     .maybeSingle();
 
   if (profileErr) {
@@ -138,7 +138,7 @@ export default async function ProfileSettingsPage({
           </div>
 
           <AvatarUpload
-            userId={user.id}
+            userId={user!.id}
             currentAvatarUrl={profile?.avatar_url ?? null}
           />
           <div>

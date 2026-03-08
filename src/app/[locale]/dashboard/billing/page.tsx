@@ -52,12 +52,12 @@ export default async function BillingPage({
       supabase
         .from("subscriptions")
         .select("plan_id, status, stripe_customer_id")
-        .eq("user_id", user.id)
+        .eq("user_id", user!.id)
         .maybeSingle(),
       supabase
         .from("profiles")
         .select("stripe_connect_account_id, paypal_email")
-        .eq("id", user.id)
+        .eq("id", user!.id)
         .maybeSingle(),
     ]);
 

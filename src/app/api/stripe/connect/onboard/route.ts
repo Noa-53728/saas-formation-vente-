@@ -26,7 +26,7 @@ export async function POST() {
     const { data: profile } = await supabase
       .from("profiles")
       .select("stripe_connect_account_id")
-      .eq("id", user.id)
+      .eq("id", user!.id)
       .maybeSingle();
 
     let accountId = profile?.stripe_connect_account_id ?? null;
@@ -35,7 +35,7 @@ export async function POST() {
       const account = await stripe.accounts.create({
         type: "express",
         country: "FR",
-        email: user.email,
+        email: user!.email,
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
@@ -46,7 +46,7 @@ export async function POST() {
       await supabase
         .from("profiles")
         .update({ stripe_connect_account_id: accountId })
-        .eq("id", user.id);
+        .eq("id", user!.id);
     }
 
     const accountLink = await stripe.accountLinks.create({

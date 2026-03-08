@@ -51,12 +51,12 @@ export async function GET(req: NextRequest) {
       .eq("id", courseId)
       .maybeSingle();
 
-    if (!course || course.author_id !== user.id) {
+    if (!course || course.author_id !== user!.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const origin = req.headers.get("origin") ?? req.nextUrl.origin ?? "http://localhost:3000";
-    const url = await createBoostSession(courseId, user.id, origin);
+    const url = await createBoostSession(courseId, user!.id, origin);
 
     if (!url) {
       return NextResponse.json({ error: "Pas d'URL Stripe" }, { status: 500 });
@@ -98,12 +98,12 @@ export async function POST(req: Request) {
       .eq("id", courseId)
       .maybeSingle();
 
-    if (!course || course.author_id !== user.id) {
+    if (!course || course.author_id !== user!.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const origin = req.headers.get("origin") ?? "http://localhost:3000";
-    const url = await createBoostSession(courseId, user.id, origin);
+    const url = await createBoostSession(courseId, user!.id, origin);
 
     return NextResponse.json({ url: url ?? null }, { status: 200 });
   } catch (err: any) {

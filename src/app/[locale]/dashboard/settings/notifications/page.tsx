@@ -1,3 +1,4 @@
+import { getLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -22,7 +23,7 @@ async function updateNotificationsAction(formData: FormData) {
       notify_sales: notifySales,
       notify_reminders: notifyReminders,
     })
-    .eq("id", user.id);
+    .eq("id", user!.id);
 
   redirect({ href: "/dashboard/settings/notifications?updated=1", locale });
 }
@@ -43,7 +44,7 @@ export default async function NotificationsSettingsPage({
   const { data: profile } = await supabase
     .from("profiles")
     .select("notify_messages, notify_sales, notify_reminders")
-    .eq("id", user.id)
+    .eq("id", user!.id)
     .maybeSingle();
 
   const params = await searchParams;

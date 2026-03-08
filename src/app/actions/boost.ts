@@ -41,7 +41,7 @@ export async function createBoostCheckoutAction(formData: FormData) {
     .maybeSingle();
 
   if (courseErr || !course) throw new Error("Cours introuvable");
-  if (course.author_id !== user.id) throw new Error("Non autorisé");
+  if (course.author_id !== user!.id) throw new Error("Non autorisé");
 
   const priceId = process.env.STRIPE_BOOST_PRICE_ID;
   if (!priceId) throw new Error("STRIPE_BOOST_PRICE_ID manquant");
@@ -56,7 +56,7 @@ export async function createBoostCheckoutAction(formData: FormData) {
     metadata: {
       type: "boost",
       course_id: courseId,
-      user_id: user.id,
+      user_id: user!.id,
     },
   });
 
@@ -75,7 +75,7 @@ export async function applyFreeBoostAction(formData: FormData) {
   const supabase = createSupabaseServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) redirect({ href: "/auth/login", locale });
-  const userId = userData.user.id;
+  const userId = userData!.user.id;
 
   const { data: course } = await supabase
     .from("courses")

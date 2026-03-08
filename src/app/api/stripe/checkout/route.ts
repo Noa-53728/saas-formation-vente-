@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
-    customer_email: session.user.email!,
+    customer_email: session!.user.email!,
     line_items: [
       {
         price_data: {
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     metadata: {
       type: "purchase",
       course_id: course.id,
-      user_id: session.user.id,
+      user_id: session!.user.id,
     },
     success_url: `${(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")}/success`,
     cancel_url: `${(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")}/cancel`,

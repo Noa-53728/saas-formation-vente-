@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Formation introuvable" }, { status: 404 });
     }
 
-    if (course.author_id === session.user.id) {
+    if (course.author_id === session!.user.id) {
       return NextResponse.json({ error: "Vous êtes déjà l'auteur" }, { status: 400 });
     }
 
@@ -52,10 +52,10 @@ export async function POST(request: Request) {
       ],
       success_url: `${baseUrl}/courses/${course.id}?paiement=succes`,
       cancel_url: `${baseUrl}/courses/${course.id}?paiement=annule`,
-      customer_email: session.user.email ?? undefined,
+      customer_email: session!.user.email ?? undefined,
       metadata: {
         course_id: course.id,
-        user_id: session.user.id
+        user_id: session!.user.id
       }
     });
 

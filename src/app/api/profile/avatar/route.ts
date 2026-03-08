@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const { error } = await supabase
     .from("profiles")
     .update({ avatar_url: avatarUrl })
-    .eq("id", user.id);
+    .eq("id", user!.id);
 
   if (error) {
     return NextResponse.json(

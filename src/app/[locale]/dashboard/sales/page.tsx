@@ -45,7 +45,7 @@ export default async function SalesPage() {
     );
   }
 
-  const userId = user.id;
+  const userId = user!.id;
 
   // 0) Abonnement (Pro = accès au graphique)
   let isPro = false;

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing data" }, { status: 400 });
   }
 
-  const buyerId = session.user.id;
+  const buyerId = session!.user.id;
 
   // 🔍 Vérifier si une conversation existe déjà
   const { data: existingConversation, error: convErr } = await supabase

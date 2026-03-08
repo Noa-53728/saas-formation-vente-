@@ -17,7 +17,7 @@ export default async function ConversationPage({
     redirect({ href: "/auth/login", locale: await getLocale() });
   }
 
-  const userId = session.user.id;
+  const userId = session!.user.id;
 
   /* 🔎 Charger le cours */
   const { data: course } = await supabase

@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   // 3) Créer customer Stripe si besoin
   if (!stripeCustomerId || stripeCustomerId === "pending") {
     const customer = await stripe.customers.create({
-      metadata: { user_id: user.id },
+      metadata: { user_id: user!.id },
     });
     stripeCustomerId = customer.id;
 
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     success_url: `${appUrl}/${locale}/dashboard/billing?checkout=success`,
     cancel_url: `${appUrl}/${locale}/dashboard/billing?checkout=cancel`,
 
-    client_reference_id: user.id,
+    client_reference_id: user!.id,
 
     metadata: {
       user_id: user.id,
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     // ✅ CRITIQUE : metadata sur la subscription
     subscription_data: {
       metadata: {
-        user_id: user.id,
+        user_id: user!.id,
         plan_id: planId,
       },
     },
