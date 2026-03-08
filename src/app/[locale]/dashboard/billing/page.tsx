@@ -15,7 +15,7 @@ async function updatePaypalEmailAction(formData: FormData) {
   await supabase
     .from("profiles")
     .update({ paypal_email: email })
-    .eq("id", user.id);
+    .eq("id", user!.id);
   redirect({ href: "/dashboard/billing?paypal=updated", locale });
 }
 
