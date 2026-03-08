@@ -250,7 +250,7 @@ export default async function CourseDetailPage({
 
     const locale = await getLocale();
     if (!user) redirect({ href: "/auth/login", locale });
-    if (user.id === course.author_id) redirect({ href: "/dashboard", locale });
+    if (user!.id === course.author_id) redirect({ href: "/dashboard", locale });
     redirect({ href: `/messages/${course.id}/${course.author_id}`, locale });
   };
 
