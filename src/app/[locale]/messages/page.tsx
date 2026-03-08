@@ -1,3 +1,4 @@
+import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
