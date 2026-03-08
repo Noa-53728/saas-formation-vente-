@@ -74,8 +74,9 @@ export async function applyFreeBoostAction(formData: FormData) {
 
   const supabase = createSupabaseServerClient();
   const { data: userData } = await supabase.auth.getUser();
-  if (!userData?.user) redirect({ href: "/auth/login", locale });
-  const userId = userData!.user.id;
+  const user = userData?.user;
+  if (!user) redirect({ href: "/auth/login", locale });
+  const userId = user.id;
 
   const { data: course } = await supabase
     .from("courses")
