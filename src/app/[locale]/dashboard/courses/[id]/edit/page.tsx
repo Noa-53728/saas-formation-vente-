@@ -33,7 +33,7 @@ export default async function EditCoursePage({ params }: PageProps) {
     .maybeSingle();
 
   if (!course) redirect({ href: "/dashboard", locale });
-  if (course.author_id !== session.user.id) redirect({ href: "/dashboard", locale });
+  if (course.author_id !== session!.user.id) redirect({ href: "/dashboard", locale });
 
   // 4) sales (purchases)
   // Si ton tableau purchases a "amount_cents", on l’utilise.
