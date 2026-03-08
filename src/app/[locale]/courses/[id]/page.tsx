@@ -221,7 +221,7 @@ export default async function CourseDetailPage({
       metadata: {
         type: "purchase",
         course_id: course.id,
-        user_id: user.id,
+        user_id: user!.id,
       },
       success_url: `${baseUrl}/success`,
       cancel_url: `${baseUrl}/cancel`,
